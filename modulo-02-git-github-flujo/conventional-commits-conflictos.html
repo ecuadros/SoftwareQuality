@@ -1,0 +1,168 @@
+---
+layout: lab
+title: "Conventional Commits y Resolución de Conflictos"
+subtitle: "Un historial de commits legible es documentación gratis. Un conflicto de merge bien resuelto no debería darte miedo."
+eyebrow: "Módulo 2 · Git/GitHub Avanzado y Flujo Colaborativo"
+module: 2
+module_title: "Git/GitHub Avanzado y Flujo Colaborativo"
+prev_url: "/modulo-02-git-github-flujo/pull-requests-code-review.html"
+prev_title: "Pull Requests, code review y CODEOWNERS"
+---
+
+<nav class="demo-toc">
+  <a href="#conventional-commits">Conventional Commits</a>
+  <a href="#resolucion-conflictos">Resolver un conflicto</a>
+  <a href="#laboratorio-conflicto">Laboratorio: provoca y resuelve uno</a>
+  <a href="#checklist-cierre">Checklist de cierre — Módulo 2</a>
+  <a href="#autoevaluacion">Autoevaluación</a>
+</nav>
+
+<section class="demo-section" id="conventional-commits">
+  <span class="section-kicker">// mensajes de commit con estructura</span>
+  <h2>Conventional Commits</h2>
+  <p>
+    <a href="https://www.conventionalcommits.org/" target="_blank" rel="noopener">Conventional Commits</a>
+    es una convención simple para el mensaje de commit: <code>tipo(alcance): descripción</code>. No es
+    burocracia — es lo que en el <strong>Módulo 5</strong> te va a permitir generar un changelog y decidir
+    la siguiente versión semántica <em>automáticamente</em>, sin que nadie lo escriba a mano.
+  </p>
+
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Tipo</th><th>Cuándo usarlo</th><th>Ejemplo</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>feat</code></td><td>Nueva funcionalidad para el usuario.</td><td><code>feat(pagos): agrega validación de tarjeta</code></td></tr>
+        <tr><td><code>fix</code></td><td>Corrección de un bug.</td><td><code>fix(inventario): corrige redondeo de stock negativo</code></td></tr>
+        <tr><td><code>test</code></td><td>Agregar o corregir tests, sin tocar código de producción.</td><td><code>test(pagos): cubre caso de tarjeta expirada</code></td></tr>
+        <tr><td><code>refactor</code></td><td>Cambio interno sin alterar comportamiento observable.</td><td><code>refactor(pagos): extrae validación a función pura</code></td></tr>
+        <tr><td><code>docs</code></td><td>Solo documentación.</td><td><code>docs: agrega guía de instalación</code></td></tr>
+        <tr><td><code>chore</code></td><td>Mantenimiento (dependencias, configuración) sin impacto en el código fuente.</td><td><code>chore: actualiza pytest a 8.x</code></td></tr>
+        <tr><td><code>ci</code></td><td>Cambios al pipeline de integración continua.</td><td><code>ci: agrega job de cobertura</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Regla práctica:</strong> si tu mensaje de commit necesita un "y" para describirlo
+    (<code>"agrega validación y corrige un bug"</code>), probablemente son dos commits, no uno. Un commit
+    debería poder revertirse solo, sin arrastrar un cambio no relacionado.
+  </div>
+</section>
+
+<section class="demo-section" id="resolucion-conflictos">
+  <span class="section-kicker">// cuando dos ramas tocan lo mismo</span>
+  <h2>Anatomía de un conflicto de merge</h2>
+  <p>
+    Un conflicto ocurre cuando dos ramas modificaron la <strong>misma línea</strong> (o líneas adyacentes)
+    de un archivo de forma distinta, y Git no puede decidir cuál versión es la correcta — con razón,
+    porque es una decisión que solo tú puedes tomar.
+  </p>
+
+  <div class="code-block">
+    <div class="code-block-label">bash — al fusionar aparece esto</div>
+    <pre>$ git merge feature/descuento-vip
+Auto-merging src/pagos.py
+CONFLICT (content): Merge conflict in src/pagos.py
+Automatic merge failed; fix conflicts and then commit the result.</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-block-label">src/pagos.py — marcadores de conflicto</div>
+    <pre>def calcular_descuento(monto):
+<span class="cm">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span>
+    return monto * 0.10  <span class="cm"># tu rama: 10% fijo</span>
+<span class="cm">=======</span>
+    return monto * 0.15 if monto > 100 else monto * 0.05  <span class="cm"># su rama: descuento variable</span>
+<span class="cm">&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/descuento-vip</span></pre>
+  </div>
+
+  <p>Los pasos para resolverlo, siempre iguales:</p>
+  <ol style="margin: 0 0 1rem 1.25rem; color: var(--muted); line-height: 1.9;">
+    <li>Abre el archivo y decide qué versión (o combinación de ambas) es la correcta — hablando con el autor de la otra rama si hace falta, no adivinando.</li>
+    <li>Borra los tres marcadores (<code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code>=======</code>, <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>) dejando solo el código final.</li>
+    <li><code>git add archivo-resuelto.py</code> — le dice a Git que ya decidiste.</li>
+    <li><code>git commit</code> (sin <code>-m</code>, Git ya prepara un mensaje de merge) o <code>git rebase --continue</code> si estabas en un rebase.</li>
+    <li><strong>Corre los tests localmente antes de hacer push</strong> — un conflicto resuelto sintácticamente puede seguir estando semánticamente mal.</li>
+  </ol>
+</section>
+
+<section class="demo-section" id="laboratorio-conflicto">
+  <span class="section-kicker">// laboratorio</span>
+  <h2>Laboratorio: provoca un conflicto real y resuélvelo</h2>
+  <p>Practica en tu propio repo, sin depender de nadie más, antes de que te ocurra "en caliente" con un compañero.</p>
+
+  <div class="code-block">
+    <div class="code-block-label">bash</div>
+    <pre><span class="cm"># 1. Desde main, crea dos ramas que modificarán la misma línea</span>
+git checkout main
+git checkout -b feature/rama-a
+<span class="cm"># edita una línea de un archivo existente, por ejemplo cambia un mensaje</span>
+git commit -am "feat: cambia mensaje de bienvenida (versión A)"
+git checkout main
+git checkout -b feature/rama-b
+<span class="cm"># edita esa MISMA línea de forma distinta</span>
+git commit -am "feat: cambia mensaje de bienvenida (versión B)"
+
+<span class="cm"># 2. Fusiona la primera sin problema</span>
+git checkout main
+git merge feature/rama-a
+
+<span class="cm"># 3. Al fusionar la segunda, Git debería reportar CONFLICT</span>
+git merge feature/rama-b</pre>
+  </div>
+
+  <div class="checklist" data-key="laboratorio-conflicto">
+    <div class="checklist-header">
+      <span class="checklist-title">Al resolverlo, confirma que hiciste esto</span>
+      <span class="checklist-progress"></span>
+    </div>
+    <ul>
+      <li data-item="conflicto-real"><input type="checkbox" id="lc-1" /><label for="lc-1">Viste el mensaje <code>CONFLICT</code> real de Git, no lo simulaste leyendo.</label></li>
+      <li data-item="marcadores-fuera"><input type="checkbox" id="lc-2" /><label for="lc-2">Eliminaste los tres marcadores de conflicto del archivo por completo.</label></li>
+      <li data-item="commit-merge"><input type="checkbox" id="lc-3" /><label for="lc-3">Completaste el commit de merge (<code>git log --graph</code> debería mostrar las dos ramas uniéndose).</label></li>
+      <li data-item="push-final"><input type="checkbox" id="lc-4" /><label for="lc-4">Hiciste push de <code>main</code> ya resuelto.</label></li>
+    </ul>
+  </div>
+</section>
+
+<section class="demo-section" id="checklist-cierre">
+  <span class="section-kicker">// cierre del módulo 2</span>
+  <h2>Checklist de entrega — Módulo 2</h2>
+  <div class="checklist" data-key="entrega-modulo-2">
+    <div class="checklist-header">
+      <span class="checklist-title">Módulo 2 — listo para revisión</span>
+      <span class="checklist-progress"></span>
+    </div>
+    <ul>
+      <li data-item="al-menos-2-prs"><input type="checkbox" id="ec2-1" /><label for="ec2-1">Al menos 2 PRs fusionados a través del flujo GitHub Flow (rama → PR → review → merge), no push directo.</label></li>
+      <li data-item="pr-cruzado"><input type="checkbox" id="ec2-2" /><label for="ec2-2">Al menos 1 PR revisado por otra persona real, con comentarios sustanciales respondidos.</label></li>
+      <li data-item="codeowners"><input type="checkbox" id="ec2-3" /><label for="ec2-3">Archivo <code>CODEOWNERS</code> presente y funcionando.</label></li>
+      <li data-item="conventional"><input type="checkbox" id="ec2-4" /><label for="ec2-4">El historial de commits del repo sigue Conventional Commits de forma consistente.</label></li>
+      <li data-item="conflicto-resuelto"><input type="checkbox" id="ec2-5" /><label for="ec2-5">Al menos un conflicto de merge real resuelto y documentado (laboratorio de esta página).</label></li>
+    </ul>
+  </div>
+</section>
+
+<section class="demo-section" id="autoevaluacion">
+  <span class="section-kicker">// autoevaluación</span>
+  <h2>Autoevaluación</h2>
+  <div class="self-check">
+    <p class="sc-question">
+      Ves este marcador en un archivo tras un <code>git merge</code>: <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</code>.
+      ¿Qué representa el bloque de código que viene justo después de esa línea, antes del <code>=======</code>?
+    </p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="true">La versión del código en la rama en la que estás parado (la actual).</button>
+      <button class="sc-option" data-correct="false">La versión del código en la rama que estás intentando fusionar.</button>
+      <button class="sc-option" data-correct="false">Una versión combinada que Git ya resolvió automáticamente.</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: todo lo que está entre <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</code> y <code>=======</code>
+      es tu rama actual. Lo que está entre <code>=======</code> y <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt; nombre-rama</code>
+      es la rama que estás fusionando. Git nunca decide "cuál es la correcta" por ti — solo te muestra
+      ambas para que elijas.
+    </div>
+  </div>
+</section>

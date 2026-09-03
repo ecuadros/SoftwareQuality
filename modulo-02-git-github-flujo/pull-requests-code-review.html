@@ -1,0 +1,152 @@
+---
+layout: lab
+title: "Pull Requests, Code Review y CODEOWNERS"
+subtitle: "El code review es la práctica de calidad más barata y más subestimada que existe."
+eyebrow: "Módulo 2 · Git/GitHub Avanzado y Flujo Colaborativo"
+module: 2
+module_title: "Git/GitHub Avanzado y Flujo Colaborativo"
+prev_url: "/modulo-02-git-github-flujo/estrategias-ramas.html"
+prev_title: "Estrategias de ramas: GitHub Flow y Trunk-Based"
+next_url: "/modulo-02-git-github-flujo/conventional-commits-conflictos.html"
+next_title: "Conventional Commits y resolución de conflictos"
+---
+
+<nav class="demo-toc">
+  <a href="#anatomia-pr">Anatomía de un buen PR</a>
+  <a href="#code-review">Cómo revisar código</a>
+  <a href="#codeowners">CODEOWNERS</a>
+  <a href="#laboratorio">Laboratorio: PR cruzado</a>
+  <a href="#autoevaluacion">Autoevaluación</a>
+</nav>
+
+<section class="demo-section" id="anatomia-pr">
+  <span class="section-kicker">// antes de pedir revisión</span>
+  <h2>Anatomía de un buen Pull Request</h2>
+  <p>
+    Un PR es una solicitud de atención de otro ser humano. La calidad del PR determina qué tan rápido y
+    qué tan bien te van a revisar.
+  </p>
+  <ul style="margin: 0 0 1rem 1.25rem; color: var(--muted); line-height: 1.9;">
+    <li><strong style="color:var(--text)">Pequeño.</strong> Un PR de +50 líneas se revisa peor que uno de +500 — no porque el revisor no pueda leer tanto, sino porque la atención humana se degrada después de cierto punto y empieza a aprobar "de confianza". Divide features grandes en varios PRs.</li>
+    <li><strong style="color:var(--text)">Una sola cosa.</strong> No mezcles una corrección de bug con un refactor "ya que estaba ahí". Dificulta el review y el <code>git bisect</code> futuro.</li>
+    <li><strong style="color:var(--text)">Descripción con contexto</strong>, no solo el qué. La plantilla del Módulo 1 ya te obliga a esto: qué cambia, por qué, cómo se probó.</li>
+    <li><strong style="color:var(--text)">Se auto-revisa primero.</strong> Lee tu propio diff en GitHub antes de pedir revisión — encontrarás la mitad de los comentarios que recibirías, sin gastar el tiempo de nadie más.</li>
+  </ul>
+</section>
+
+<section class="demo-section" id="code-review">
+  <span class="section-kicker">// el rol de revisor</span>
+  <h2>Cómo revisar código de otra persona</h2>
+  <p>
+    Revisar código es una habilidad distinta a escribirlo. El objetivo no es demostrar que sabes más — es
+    proteger la calidad del repo compartido sin frenar al equipo innecesariamente.
+  </p>
+
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Sí frena el merge</th><th>No debería frenar el merge</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>El código no hace lo que dice que hace (correctitud).</td><td>Preferencias de estilo que un linter debería atrapar (Módulo 6) — coméntalo, pero como sugerencia, no bloqueo.</td></tr>
+        <tr><td>Falta un caso de prueba obvio para la lógica nueva.</td><td>"Yo lo hubiera escrito distinto" sin una razón concreta de mantenibilidad o corrección.</td></tr>
+        <tr><td>Introduce un riesgo de seguridad (input sin validar, secreto hardcodeado).</td><td>Nombres de variable que no son los que tú elegirías, si son claros igual.</td></tr>
+        <tr><td>Rompe una convención de arquitectura acordada por el equipo.</td><td>Micro-optimizaciones sin evidencia de que el rendimiento importa ahí.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <details class="info-toggle">
+    <summary>Checklist mental del revisor</summary>
+    <div class="toggle-body">
+      <ul>
+        <li>¿Entiendo qué problema resuelve este cambio con solo leer la descripción?</li>
+        <li>¿El código hace lo que dice? ¿Hay un caso límite obvio sin cubrir?</li>
+        <li>¿Hay tests para la lógica nueva o modificada?</li>
+        <li>¿Introduce algo que comprometa seguridad, datos sensibles o rendimiento crítico?</li>
+        <li>¿Podría entender este código en seis meses sin preguntarle al autor?</li>
+      </ul>
+    </div>
+  </details>
+
+  <div class="callout warn">
+    <strong>Sesgo común a evitar:</strong> aprobar sin leer de verdad porque "confío en quien lo escribió".
+    Un PR aprobado sin revisión real no es una red de seguridad — es teatro de proceso. Si tu repo exige
+    aprobación (Módulo 1), que sea porque de verdad alguien leyó el diff.
+  </div>
+</section>
+
+<section class="demo-section" id="codeowners">
+  <span class="section-kicker">// automatizar quién revisa</span>
+  <h2>CODEOWNERS: revisores automáticos</h2>
+  <p>
+    En vez de acordarte de pedir revisión a la persona correcta cada vez, un archivo
+    <code>CODEOWNERS</code> hace que GitHub la asigne sola según qué archivos toca el PR — y, combinado
+    con <code>Require review from Code Owners</code> en branch protection, hace la revisión de esa persona
+    obligatoria, no opcional.
+  </p>
+
+  <div class="code-block">
+    <div class="code-block-label">.github/CODEOWNERS</div>
+    <pre><span class="cm"># Dueño por defecto de todo el repo</span>
+*                       @tu-usuario
+
+<span class="cm"># La persona/equipo que revisa specificamente la parte de CI</span>
+/.github/workflows/     @tu-usuario
+
+<span class="cm"># Si trabajas en equipo, cada quien puede ser owner de su módulo</span>
+/src/pagos/             @companera-de-equipo
+/src/inventario/        @tu-usuario</pre>
+  </div>
+
+  <p>
+    En un proyecto solo, <code>CODEOWNERS</code> parece innecesario — pero déjalo configurado desde ya:
+    en cuanto trabajes en pareja para el ejercicio de abajo, o en el proyecto final en equipo, ya está
+    listo.
+  </p>
+</section>
+
+<section class="demo-section" id="laboratorio">
+  <span class="section-kicker">// laboratorio</span>
+  <h2>Laboratorio: PR cruzado con un compañero</h2>
+  <p>
+    Este ejercicio requiere hacerlo en pareja con otro estudiante del curso — es la simulación de equipo
+    real que menciona <code>CLAUDE.md</code>.
+  </p>
+
+  <div class="checklist" data-key="pr-cruzado">
+    <div class="checklist-header">
+      <span class="checklist-title">Pasos del ejercicio</span>
+      <span class="checklist-progress"></span>
+    </div>
+    <ul>
+      <li data-item="agregar-colaborador"><input type="checkbox" id="pr-1" /><label for="pr-1">Agrega a tu compañero como colaborador de tu repo (<strong>Settings → Collaborators</strong>) y hazlo tú en el suyo.</label></li>
+      <li data-item="rama-feature"><input type="checkbox" id="pr-2" /><label for="pr-2">Crea una rama <code>feature/*</code> con un cambio real y pequeño (una función, un endpoint, una validación).</label></li>
+      <li data-item="abrir-pr"><input type="checkbox" id="pr-3" /><label for="pr-3">Abre el PR usando la plantilla del Módulo 1, completa todos los campos.</label></li>
+      <li data-item="revision-cruzada"><input type="checkbox" id="pr-4" /><label for="pr-4">Tu compañero revisa tu PR (y tú el suyo) con al menos 2 comentarios sustanciales — no solo "LGTM".</label></li>
+      <li data-item="resolver-comentarios"><input type="checkbox" id="pr-5" /><label for="pr-5">Responde a los comentarios con un commit adicional, no editando el commit original.</label></li>
+      <li data-item="merge"><input type="checkbox" id="pr-6" /><label for="pr-6">Fusiona el PR solo después de la aprobación explícita — branch protection debería impedirte hacerlo antes.</label></li>
+    </ul>
+  </div>
+</section>
+
+<section class="demo-section" id="autoevaluacion">
+  <span class="section-kicker">// autoevaluación</span>
+  <h2>Autoevaluación</h2>
+  <div class="self-check">
+    <p class="sc-question">
+      Un revisor comenta: "Yo habría usado un <code>for</code> en vez de una list comprehension, pero
+      ambos funcionan igual de bien y son igual de legibles." ¿Debería este comentario bloquear el merge?
+    </p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Sí, todo comentario de un revisor bloquea el merge por definición.</button>
+      <button class="sc-option" data-correct="true">No — es preferencia de estilo sin impacto en correctitud ni mantenibilidad; debería ser sugerencia, no bloqueo.</button>
+      <button class="sc-option" data-correct="false">Sí, porque el revisor tiene más experiencia.</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: si ambas formas son igual de correctas y legibles, es una preferencia personal. Bloquear
+      merges por esto desgasta la relación de equipo y hace que la gente deje de pedir revisión a tiempo.
+      Guarda el bloqueo para correctitud, tests, seguridad y mantenibilidad real.
+    </div>
+  </div>
+</section>

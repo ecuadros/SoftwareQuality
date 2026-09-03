@@ -1,0 +1,136 @@
+---
+layout: lab
+title: "Deuda Técnica: Origen, Medición, Priorización"
+subtitle: "Tomar un atajo no es el pecado. No saber que lo tomaste — o nunca pagarlo — sí lo es."
+eyebrow: "Módulo 1 · Fundamentos de Calidad"
+module: 1
+module_title: "Fundamentos de Calidad y Costo de la No-Calidad"
+prev_url: "/modulo-01-fundamentos-calidad/modelos-calidad-costo.html"
+prev_title: "Modelos de Calidad y Costo de la No-Calidad"
+next_url: "/modulo-01-fundamentos-calidad/setup-repo-github.html"
+next_title: "Laboratorio: setup del repo en GitHub"
+---
+
+<nav class="demo-toc">
+  <a href="#que-es">La metáfora</a>
+  <a href="#cuadrante">El cuadrante de la deuda</a>
+  <a href="#medicion">Cómo se mide</a>
+  <a href="#priorizacion">Cuándo pagarla</a>
+  <a href="#autoevaluacion">Autoevaluación</a>
+</nav>
+
+<section class="demo-section" id="que-es">
+  <span class="section-kicker">// la metáfora</span>
+  <h2>Una metáfora financiera, no un insulto</h2>
+  <p>
+    El término lo acuñó <strong>Ward Cunningham</strong> en 1992: escribir código de la forma más rápida
+    posible (en vez de la mejor forma que conoces) es como pedir un préstamo. Te da velocidad hoy, pero
+    genera <strong>interés</strong> — cada cambio futuro sobre ese código cuesta un poco más mientras la
+    deuda no se pague.
+  </p>
+  <div class="callout">
+    <strong>Lo que Cunningham no dijo:</strong> "deuda técnica" no significa "código malo" ni "atajo
+    irresponsable". Un equipo puede decidir <em>a propósito</em> tomar deuda para validar una hipótesis de
+    negocio rápido — eso es una decisión de ingeniería legítima, siempre que quede <strong>registrada y
+    visible</strong>, no escondida. El problema nunca es tomar la deuda; es no saber cuánta tienes.
+  </div>
+</section>
+
+<section class="demo-section" id="cuadrante">
+  <span class="section-kicker">// clasificación</span>
+  <h2>El cuadrante de Martin Fowler</h2>
+  <p>
+    Martin Fowler propuso clasificar la deuda en dos ejes: si fue <strong>deliberada o inadvertida</strong>,
+    y si fue <strong>prudente o imprudente</strong>. El cuadrante importa porque cada tipo se gestiona
+    distinto.
+  </p>
+
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th></th><th>Deliberada</th><th>Inadvertida</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Prudente</strong></td>
+          <td>"Sabemos que este diseño no escala a 1M de usuarios, pero necesitamos validar el producto con 100 esta semana."</td>
+          <td>"Ahora que lo construimos, vemos que debimos haberlo diseñado distinto." (aprendizaje normal)</td>
+        </tr>
+        <tr>
+          <td><strong>Imprudente</strong></td>
+          <td>"No tenemos tiempo para tests, ya los escribiremos después." (casi nunca se escriben)</td>
+          <td>"¿Qué es un patrón de diseño?" (falta de experiencia del equipo)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    La deuda <strong>prudente-deliberada</strong> es sana si se documenta y se paga. La
+    <strong>imprudente-inadvertida</strong> es la que hunde proyectos, porque nadie sabe que existe hasta
+    que el sistema es imposible de cambiar.
+  </p>
+</section>
+
+<section class="demo-section" id="medicion">
+  <span class="section-kicker">// hacerla visible</span>
+  <h2>Cómo se mide (sin adivinar)</h2>
+  <p>
+    No puedes priorizar lo que no puedes ver. Formas concretas de hacer visible la deuda técnica, de más
+    simple a más formal:
+  </p>
+  <ul style="margin: 0 0 1rem 1.25rem; color: var(--muted); line-height: 1.9;">
+    <li><strong style="color:var(--text)">Marcadores en el código</strong> — comentarios <code>// TODO</code> / <code>// FIXME</code> rastreables con <code>grep -rn "TODO\|FIXME" .</code>; útil pero se vuelve invisible si nadie los revisa.</li>
+    <li><strong style="color:var(--text)">Issues etiquetados</strong> — un issue de GitHub con label <code>deuda-tecnica</code>, con contexto de por qué se tomó y qué costaría pagarla. Es lo que vas a usar en este curso.</li>
+    <li><strong style="color:var(--text)">Análisis estático automatizado</strong> — herramientas como SonarQube calculan un <em>índice SQALE</em>: tiempo estimado para arreglar todos los code smells detectados, expresado en horas/días. Lo vas a integrar en el <strong>Módulo 6</strong>.</li>
+    <li><strong style="color:var(--text)">Ratio deuda/tamaño</strong> — tiempo estimado de remediación dividido entre tiempo estimado de desarrollo total. Sirve para comparar la salud relativa de distintos módulos o proyectos.</li>
+  </ul>
+</section>
+
+<section class="demo-section" id="priorizacion">
+  <span class="section-kicker">// decisión de equipo</span>
+  <h2>¿Pagarla ahora o vivir con ella?</h2>
+  <p>No toda deuda merece pagarse. Antes de agendar una "semana de refactor", pregúntate:</p>
+
+  <div class="checklist" data-key="priorizacion-deuda">
+    <div class="checklist-header">
+      <span class="checklist-title">Señales de que esta deuda sí urge pagarse</span>
+      <span class="checklist-progress"></span>
+    </div>
+    <ul>
+      <li data-item="frecuencia"><input type="checkbox" id="dt-1" /><label for="dt-1">El código con deuda se modifica seguido (alta frecuencia de cambio) — el interés se paga cada vez.</label></li>
+      <li data-item="bugs"><input type="checkbox" id="dt-2" /><label for="dt-2">Esa zona del código concentra una parte desproporcionada de los bugs reportados.</label></li>
+      <li data-item="onboarding"><input type="checkbox" id="dt-3" /><label for="dt-3">Nadie del equipo se anima a tocarla sin ayuda — es un cuello de botella de conocimiento.</label></li>
+      <li data-item="bloqueo"><input type="checkbox" id="dt-4" /><label for="dt-4">Está bloqueando directamente una feature del roadmap actual, no una hipotética futura.</label></li>
+    </ul>
+  </div>
+
+  <div class="callout accent2">
+    Si marcaste 0-1: probablemente puedes seguir viviendo con esa deuda. Si marcaste 3-4: es candidata
+    fuerte para priorizar antes de seguir construyendo encima. Código con deuda que <em>casi nunca se
+    toca</em> no está generando interés activo — no es la prioridad, aunque "se vea feo".
+  </div>
+</section>
+
+<section class="demo-section" id="autoevaluacion">
+  <span class="section-kicker">// autoevaluación</span>
+  <h2>Autoevaluación</h2>
+  <div class="self-check">
+    <p class="sc-question">
+      Un equipo lanza una función de emergencia sin tests para cumplir un deadline legal, y crea un issue
+      documentando exactamente qué se omitió y por qué. ¿Cómo se clasifica esta deuda en el cuadrante de Fowler?
+    </p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="true">Prudente y deliberada</button>
+      <button class="sc-option" data-correct="false">Imprudente y deliberada</button>
+      <button class="sc-option" data-correct="false">Prudente e inadvertida</button>
+      <button class="sc-option" data-correct="false">Imprudente e inadvertida</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: es <strong>deliberada</strong> porque el equipo sabía exactamente lo que estaba haciendo, y
+      <strong>prudente</strong> porque la decisión fue razonable dado el contexto (deadline legal) y quedó
+      documentada para pagarse después. Habría sido imprudente si nadie hubiera dejado registro de la
+      omisión.
+    </div>
+  </div>
+</section>

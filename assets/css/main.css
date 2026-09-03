@@ -943,3 +943,154 @@ details.info-toggle .toggle-body {
 }
 
 details.info-toggle .toggle-body li { margin-bottom: 0.4rem; }
+
+/* ============================================================
+   Code block (comandos / archivos de configuración)
+   ============================================================ */
+.code-block {
+  background: #010409;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin: 1rem 0 1.5rem;
+  overflow: hidden;
+  max-width: 780px;
+}
+
+.code-block-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0.4rem 0.9rem;
+}
+
+.code-block pre {
+  margin: 0;
+  padding: 1rem 1.1rem;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #c9d1d9;
+}
+
+.code-block .cm { color: var(--muted); font-style: italic; }
+
+/* ============================================================
+   Worked table (comparaciones)
+   ============================================================ */
+.worked-example { overflow-x: auto; margin: 1.25rem 0; }
+
+.worked-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 520px; }
+.worked-table th, .worked-table td { text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); }
+.worked-table th { color: var(--accent2); font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.worked-table td { color: var(--muted); vertical-align: top; }
+.worked-table td strong { color: var(--text); }
+
+/* ============================================================
+   Checklist (con progreso persistente en localStorage)
+   ============================================================ */
+.checklist {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.4rem;
+  margin: 1.25rem 0 1.75rem;
+  max-width: 780px;
+}
+
+.checklist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.checklist-title { font-weight: 600; font-size: 0.92rem; color: var(--text); }
+
+.checklist-progress {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--accent3);
+  background: rgba(63, 185, 80, 0.1);
+  border: 1px solid rgba(63, 185, 80, 0.25);
+  border-radius: 20px;
+  padding: 0.15rem 0.65rem;
+  white-space: nowrap;
+}
+
+.checklist ul { list-style: none; display: flex; flex-direction: column; gap: 0.55rem; }
+
+.checklist li { display: flex; align-items: flex-start; gap: 0.6rem; }
+
+.checklist li input[type="checkbox"] {
+  margin-top: 0.2rem;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent3);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.checklist li label {
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.55;
+  cursor: pointer;
+}
+
+.checklist li label code { color: var(--accent2); }
+
+.checklist li.checked label { color: var(--text); text-decoration: line-through; text-decoration-color: var(--border); }
+
+/* ============================================================
+   Self-check (autoevaluación de una pregunta)
+   ============================================================ */
+.self-check {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent2);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.4rem;
+  margin: 1.5rem 0;
+  max-width: 780px;
+}
+
+.sc-question { font-weight: 600; color: var(--text); margin-bottom: 0.9rem; font-size: 0.95rem; }
+
+.sc-options { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.25rem; }
+
+.sc-option {
+  text-align: left;
+  font-size: 0.87rem;
+  font-family: var(--font-sans);
+  color: var(--text);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.6rem 0.9rem;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.sc-option:hover:not(:disabled) { border-color: var(--accent2); }
+
+.sc-option.correct { border-color: var(--accent3); background: rgba(63, 185, 80, 0.12); color: var(--accent3); }
+.sc-option.incorrect { border-color: var(--danger); background: rgba(248, 81, 73, 0.12); color: var(--danger); }
+.sc-option:disabled { cursor: default; }
+
+.sc-rationale {
+  display: none;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border);
+}
+
+.self-check.revealed .sc-rationale { display: block; }

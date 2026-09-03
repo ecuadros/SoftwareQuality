@@ -1,0 +1,187 @@
+---
+layout: lab
+title: "Laboratorio: Setup del Repo en GitHub"
+subtitle: "El repositorio que crearás hoy es el que vas a hacer crecer, módulo a módulo, durante todo el curso."
+eyebrow: "Módulo 1 · Laboratorio"
+module: 1
+module_title: "Fundamentos de Calidad y Costo de la No-Calidad"
+prev_url: "/modulo-01-fundamentos-calidad/deuda-tecnica.html"
+prev_title: "Deuda técnica: origen, medición, priorización"
+next_url: "/modulo-02-git-github-flujo/estrategias-ramas.html"
+next_title: "Estrategias de ramas: GitHub Flow y Trunk-Based"
+---
+
+<div class="callout accent2">
+  <strong>Este es tu repo real.</strong> No es un ejercicio desechable: es el mismo repositorio sobre el
+  que vas a agregar tests (Módulo 3), CI/CD (Módulo 5), análisis estático (Módulo 6) y seguridad
+  (Módulo 7). Tu nota se basa en el progreso real de este repo — ver <code>CLAUDE.md</code> del curso.
+</div>
+
+<nav class="demo-toc">
+  <a href="#prerequisitos">Prerequisitos</a>
+  <a href="#crear-repo">Crear el repo</a>
+  <a href="#branch-protection">Proteger la rama principal</a>
+  <a href="#plantillas">Plantillas de Issue y PR</a>
+  <a href="#editorconfig">.editorconfig</a>
+  <a href="#checklist-entrega">Checklist de entrega</a>
+</nav>
+
+<section class="demo-section" id="prerequisitos">
+  <span class="section-kicker">// antes de empezar</span>
+  <h2>Prerequisitos</h2>
+  <ul style="margin: 0 0 1rem 1.25rem; color: var(--muted); line-height: 1.9;">
+    <li>Cuenta de GitHub personal (no de organización) — este repo lo posees tú.</li>
+    <li><code>git</code> instalado y configurado (<code>git config --global user.name/user.email</code>).</li>
+    <li>Recomendado: <a href="https://cli.github.com/" target="_blank" rel="noopener">GitHub CLI</a> (<code>gh</code>) instalado y autenticado con <code>gh auth login</code> — lo vas a usar todo el curso.</li>
+    <li>Decide desde ya si tu proyecto será en <strong>Python</strong>, en <strong>C++</strong>, o en ambos en paralelo (recomendado para aprovechar todos los labs del curso).</li>
+  </ul>
+</section>
+
+<section class="demo-section" id="crear-repo">
+  <span class="section-kicker">// paso 1</span>
+  <h2>Crear el repositorio</h2>
+  <p>
+    Elige un nombre real de proyecto (no <code>"proyecto-calidad"</code> — algo que podrías defender en una
+    entrevista: <code>gestor-tareas</code>, <code>motor-inventario</code>, lo que sea que vayas a construir
+    durante el curso). Créalo público, para que la evaluación por progreso de repo sea auditable.
+  </p>
+
+  <div class="code-block">
+    <div class="code-block-label">bash</div>
+    <pre><span class="cm"># reemplaza NOMBRE-PROYECTO por el nombre real que elegiste</span>
+mkdir NOMBRE-PROYECTO && cd NOMBRE-PROYECTO
+git init -b main
+echo "# NOMBRE-PROYECTO" > README.md
+git add README.md
+git commit -m "chore: primer commit"
+
+gh repo create TU-USUARIO/NOMBRE-PROYECTO --public --source=. --remote=origin --push</pre>
+  </div>
+
+  <p>
+    Verifica que quedó publicado visitando <code>https://github.com/TU-USUARIO/NOMBRE-PROYECTO</code>.
+  </p>
+</section>
+
+<section class="demo-section" id="branch-protection">
+  <span class="section-kicker">// paso 2</span>
+  <h2>Proteger la rama principal</h2>
+  <p>
+    Sin protección de rama, nada te impide (a ti o a un compañero de equipo) romper <code>main</code> con
+    un push directo. La protección de rama es la primera regla de calidad que se aplica <em>por
+    herramienta</em>, no por disciplina personal — tema central del Módulo 2.
+  </p>
+  <p>En GitHub: <strong>Settings → Branches → Add branch protection rule</strong> sobre <code>main</code>, y activa:</p>
+  <div class="checklist" data-key="branch-protection">
+    <div class="checklist-header">
+      <span class="checklist-title">Reglas de protección a activar</span>
+      <span class="checklist-progress"></span>
+    </div>
+    <ul>
+      <li data-item="pr-required"><input type="checkbox" id="bp-1" /><label for="bp-1"><code>Require a pull request before merging</code> — nadie hace push directo a <code>main</code>, ni tú mismo.</label></li>
+      <li data-item="approvals"><input type="checkbox" id="bp-2" /><label for="bp-2"><code>Require approvals</code> (mínimo 1) — lo usarás de verdad en el Módulo 2 cuando revisen PRs cruzados.</label></li>
+      <li data-item="status-checks"><input type="checkbox" id="bp-3" /><label for="bp-3"><code>Require status checks to pass before merging</code> — quedará vacío hasta el Módulo 5 (CI), pero actívalo ya.</label></li>
+      <li data-item="no-force-push"><input type="checkbox" id="bp-4" /><label for="bp-4">Bloquear <code>force pushes</code> y borrado de la rama <code>main</code>.</label></li>
+    </ul>
+  </div>
+</section>
+
+<section class="demo-section" id="plantillas">
+  <span class="section-kicker">// paso 3</span>
+  <h2>Plantillas de Issue y Pull Request</h2>
+  <p>
+    Las plantillas no son burocracia — son la forma más barata de subir la calidad de la información que
+    llega en cada Issue y PR, sin que nadie tenga que recordarlo cada vez.
+  </p>
+
+  <div class="code-block">
+    <div class="code-block-label">.github/pull_request_template.md</div>
+    <pre>## Qué cambia y por qué
+
+## Cómo se probó
+- [ ] Tests unitarios agregados/actualizados
+- [ ] Probado manualmente localmente
+
+## Checklist
+- [ ] El código sigue las convenciones del proyecto
+- [ ] No quedan `TODO` sin issue asociado
+- [ ] La descripción del PR es suficiente para revisar sin contexto adicional</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-block-label">.github/ISSUE_TEMPLATE/bug_report.md</div>
+    <pre>---
+name: Reporte de bug
+about: Algo no funciona como debería
+labels: bug
+---
+
+**Comportamiento esperado**
+
+**Comportamiento actual**
+
+**Pasos para reproducir**
+1.
+2.
+
+**Entorno** (SO, versión de Python/C++, commit)</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-block-label">bash — crear las carpetas</div>
+    <pre>mkdir -p .github/ISSUE_TEMPLATE
+<span class="cm"># crea los dos archivos de arriba con el contenido mostrado</span>
+git add .github
+git commit -m "chore: agrega plantillas de Issue y PR"
+git push</pre>
+  </div>
+</section>
+
+<section class="demo-section" id="editorconfig">
+  <span class="section-kicker">// paso 4</span>
+  <h2>.editorconfig — la calidad más barata que existe</h2>
+  <p>
+    Antes de pensar en linters (Módulo 6), elimina la categoría de discusión más tonta en un code review:
+    espacios vs. tabs, o un archivo con final de línea distinto al del resto. Un <code>.editorconfig</code>
+    lo resuelve para cualquier editor que lo respete (VS Code, CLion, PyCharm, Vim con plugin).
+  </p>
+
+  <div class="code-block">
+    <div class="code-block-label">.editorconfig</div>
+    <pre>root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{yml,yaml,json}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false</pre>
+  </div>
+</section>
+
+<section class="demo-section" id="checklist-entrega">
+  <span class="section-kicker">// cierre del módulo 1</span>
+  <h2>Checklist de entrega — Módulo 1</h2>
+  <p>Esto es exactamente lo que se audita en tu repo a la fecha de corte del módulo (rúbrica de <code>CLAUDE.md</code>):</p>
+
+  <div class="checklist" data-key="entrega-modulo-1">
+    <div class="checklist-header">
+      <span class="checklist-title">Módulo 1 — listo para revisión</span>
+      <span class="checklist-progress"></span>
+    </div>
+    <ul>
+      <li data-item="repo-publico"><input type="checkbox" id="ce-1" /><label for="ce-1">Repo público creado, con nombre real de proyecto (no genérico).</label></li>
+      <li data-item="branch-protected"><input type="checkbox" id="ce-2" /><label for="ce-2"><code>main</code> tiene branch protection con PR + aprobación requerida.</label></li>
+      <li data-item="templates"><input type="checkbox" id="ce-3" /><label for="ce-3">Plantillas de Issue y PR presentes en <code>.github/</code>.</label></li>
+      <li data-item="editorconfig"><input type="checkbox" id="ce-4" /><label for="ce-4"><code>.editorconfig</code> en la raíz del repo.</label></li>
+      <li data-item="issue-deuda"><input type="checkbox" id="ce-5" /><label for="ce-5">Al menos un Issue con label de deuda técnica registrando una decisión tomada a propósito.</label></li>
+    </ul>
+  </div>
+</section>

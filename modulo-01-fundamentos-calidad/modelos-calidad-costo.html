@@ -1,0 +1,141 @@
+---
+layout: lab
+title: "Modelos de Calidad y Costo de la No-Calidad"
+subtitle: "Antes de escribir un solo test: ¿qué significa \"calidad\" en un producto de software, y cuánto cuesta no tenerla?"
+eyebrow: "Módulo 1 · Fundamentos de Calidad"
+module: 1
+module_title: "Fundamentos de Calidad y Costo de la No-Calidad"
+next_url: "/modulo-01-fundamentos-calidad/deuda-tecnica.html"
+next_title: "Deuda técnica: origen, medición, priorización"
+---
+
+<nav class="demo-toc">
+  <a href="#costo-no-calidad">El costo real de un bug</a>
+  <a href="#iso25010">Modelo ISO/IEC 25010</a>
+  <a href="#interna-externa">Calidad interna vs. externa</a>
+  <a href="#autoevaluacion">Autoevaluación</a>
+</nav>
+
+<section class="demo-section" id="costo-no-calidad">
+  <span class="section-kicker">// el problema</span>
+  <h2>Un bug no cuesta lo mismo en todas las etapas</h2>
+  <p>
+    "Calidad" suena a algo abstracto hasta que alguien pone un número al lado. La observación más citada
+    en ingeniería de software — con orígenes en estudios de IBM y Barry Boehm en los años 70-80, y
+    replicada con matices desde entonces — es que <strong>el costo de corregir un defecto crece de forma
+    exponencial cuanto más tarde se detecta</strong> en el ciclo de vida del software.
+  </p>
+
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Etapa donde se detecta</th><th>Costo relativo de corregirlo</th><th>Ejemplo concreto</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Diseño</strong></td><td>1×</td><td>Alguien nota en la revisión de diseño que un caso límite no está contemplado.</td></tr>
+        <tr><td><strong>Desarrollo</strong></td><td>~5-10×</td><td>El propio autor lo detecta al escribir el test unitario.</td></tr>
+        <tr><td><strong>QA / Integración</strong></td><td>~15-40×</td><td>Un tester lo encuentra antes del release; hay que reabrir la rama, re-testear, re-desplegar a staging.</td></tr>
+        <tr><td><strong>Producción</strong></td><td>~30-1000×</td><td>Un cliente lo reporta; hay hotfix de emergencia, incident response, posible pérdida de datos o reputación.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout warn">
+    <strong>Con matices:</strong> los números exactos de estos estudios están discutidos (algunos no
+    replican en contextos ágiles con CI/CD moderno). Lo que sí se sostiene consistentemente es la
+    <strong>dirección</strong>: cuanto más tarde detectas un defecto, más caro es — porque ya hay más
+    código construido sobre él, más gente lo usó, y corregirlo ahora requiere deshacer trabajo. Este
+    curso existe porque casi todas las prácticas que vas a aprender (tests, CI, análisis estático, code
+    review) son formas de <strong>mover la detección lo más a la izquierda posible</strong> ("shift left").
+  </div>
+
+  <p>
+    Piensa en un caso real: un endpoint de pagos que redondea mal los centavos. Si el error se detecta en
+    un test unitario, es una línea de código y dos minutos. Si se detecta en producción después de
+    procesar 50,000 transacciones, implica: auditoría financiera, reembolsos, un incidente documentado,
+    y probablemente una reunión con legal. Mismo bug, costo completamente distinto según cuándo lo
+    atrapaste.
+  </p>
+</section>
+
+<section class="demo-section" id="iso25010">
+  <span class="section-kicker">// vocabulario común</span>
+  <h2>ISO/IEC 25010: ocho maneras de que un software falle</h2>
+  <p>
+    "Calidad" no es una sola cosa — es un conjunto de características que a veces compiten entre sí (más
+    seguridad puede costar usabilidad; más portabilidad puede costar eficiencia). El estándar
+    <strong>ISO/IEC 25010</strong> (modelo SQuaRE) le da nombre a ocho de esas características, para que
+    un equipo pueda decir explícitamente <em>"para este producto, priorizamos X sobre Y"</em> en vez de
+    perseguir una "calidad" indefinida.
+  </p>
+
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Característica</th><th>Pregunta que responde</th><th>Ejemplo de falla</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Adecuación funcional</strong></td><td>¿Hace lo que el usuario necesita?</td><td>Un buscador que no filtra por precio porque nadie preguntó si los usuarios lo necesitaban.</td></tr>
+        <tr><td><strong>Eficiencia de desempeño</strong></td><td>¿Usa bien el tiempo y los recursos?</td><td>Un pago que tarda 8 segundos en confirmar aunque nunca falle.</td></tr>
+        <tr><td><strong>Compatibilidad</strong></td><td>¿Convive con otros sistemas?</td><td>Una API que rompe a todos sus clientes al cambiar un campo sin versionar.</td></tr>
+        <tr><td><strong>Usabilidad</strong></td><td>¿Es fácil de aprender y usar?</td><td>Un formulario de checkout de 12 pasos sin indicar el progreso.</td></tr>
+        <tr><td><strong>Confiabilidad</strong></td><td>¿Funciona de forma consistente, incluso ante fallas?</td><td>Un servicio que cae cada vez que otro servicio del que depende está lento.</td></tr>
+        <tr><td><strong>Seguridad</strong></td><td>¿Protege datos y accesos?</td><td>Contraseñas guardadas sin hash, o un endpoint sin control de autorización.</td></tr>
+        <tr><td><strong>Mantenibilidad</strong></td><td>¿Se puede modificar sin romper todo?</td><td>Una función de 800 líneas que nadie se anima a tocar.</td></tr>
+        <tr><td><strong>Portabilidad</strong></td><td>¿Se puede mover a otro entorno?</td><td>Software que solo corre porque alguien fijó a mano una versión de librería en su máquina.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Por qué te importa en este curso:</strong> cada módulo que viene ataca una o dos de estas
+    características directamente. Módulos 3-4 (pruebas) → confiabilidad y adecuación funcional.
+    Módulo 6 (análisis estático) → mantenibilidad. Módulo 7 (seguridad/performance/observabilidad) →
+    seguridad, eficiencia y confiabilidad en producción. Nombrar la característica te obliga a decidir
+    <em>qué</em> estás protegiendo con cada práctica, en vez de aplicarla "porque sí".
+  </div>
+</section>
+
+<section class="demo-section" id="interna-externa">
+  <span class="section-kicker">// distinción clave</span>
+  <h2>Calidad interna vs. calidad externa</h2>
+  <p>
+    Un mismo sistema puede tener <strong>alta calidad externa</strong> (el usuario final está contento,
+    todo funciona) y <strong>baja calidad interna</strong> (el código es un desastre que nadie entiende) —
+    al menos por un tiempo. La calidad interna es la que determina si ese sistema puede seguir
+    evolucionando sin colapsar.
+  </p>
+  <ul style="margin: 0 0 1rem 1.25rem; color: var(--muted); line-height: 1.8;">
+    <li><strong style="color:var(--text)">Calidad externa</strong> — lo que el usuario percibe: funciona, es rápido, no se cae. Se mide con métricas de producto (uptime, latencia, tasa de errores reportados).</li>
+    <li><strong style="color:var(--text)">Calidad interna</strong> — lo que el equipo de desarrollo "sufre" o disfruta: legibilidad, cobertura de tests, acoplamiento. Se mide con métricas de código (complejidad ciclomática, cobertura, deuda técnica — Módulo 6).</li>
+  </ul>
+  <p>
+    La calidad interna es una <strong>inversión invisible para el usuario pero visible para el negocio</strong>
+    en el mediano plazo: es la diferencia entre poder agregar una feature en dos días o en dos semanas.
+    Este curso, al evaluarte por el progreso real de tu repositorio (ver <code>CLAUDE.md</code>), está
+    midiendo sobre todo calidad interna — porque es la que tú controlas directamente como ingeniero.
+  </p>
+</section>
+
+<section class="demo-section" id="autoevaluacion">
+  <span class="section-kicker">// autoevaluación</span>
+  <h2>Autoevaluación</h2>
+  <div class="self-check">
+    <p class="sc-question">
+      Un sistema bancario nunca se cae y nunca calcula mal un monto, pero tarda 8 segundos en confirmar
+      cada pago. ¿Qué característica de ISO/IEC 25010 está fallando principalmente?
+    </p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Confiabilidad</button>
+      <button class="sc-option" data-correct="true">Eficiencia de desempeño</button>
+      <button class="sc-option" data-correct="false">Seguridad</button>
+      <button class="sc-option" data-correct="false">Compatibilidad</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: <strong>eficiencia de desempeño</strong> cubre tiempo de respuesta y uso de recursos. El
+      sistema es funcionalmente correcto y confiable (nunca falla, nunca calcula mal) — el problema es
+      puramente de tiempo. Es un recordatorio de que "funciona bien" y "funciona rápido" son
+      características distintas que se prueban distinto.
+    </div>
+  </div>
+</section>

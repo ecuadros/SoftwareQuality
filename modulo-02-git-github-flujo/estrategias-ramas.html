@@ -1,0 +1,143 @@
+---
+layout: lab
+title: "Estrategias de Ramas: GitHub Flow y Trunk-Based"
+subtitle: "Todos empujando a main directamente funciona con un desarrollador. Con dos, ya es una apuesta."
+eyebrow: "Módulo 2 · Git/GitHub Avanzado y Flujo Colaborativo"
+module: 2
+module_title: "Git/GitHub Avanzado y Flujo Colaborativo"
+prev_url: "/modulo-01-fundamentos-calidad/setup-repo-github.html"
+prev_title: "Laboratorio: setup del repo en GitHub"
+next_url: "/modulo-02-git-github-flujo/pull-requests-code-review.html"
+next_title: "Pull Requests, code review y CODEOWNERS"
+---
+
+<nav class="demo-toc">
+  <a href="#por-que-importa">Por qué importa</a>
+  <a href="#github-flow">GitHub Flow</a>
+  <a href="#trunk-based">Trunk-Based Development</a>
+  <a href="#gitflow">¿Y GitFlow clásico?</a>
+  <a href="#comparacion">Comparación</a>
+  <a href="#autoevaluacion">Autoevaluación</a>
+</nav>
+
+<section class="demo-section" id="por-que-importa">
+  <span class="section-kicker">// el problema</span>
+  <h2>El problema que resuelve una estrategia de ramas</h2>
+  <p>
+    Con un solo desarrollador, trabajar directo sobre <code>main</code> "funciona". En cuanto hay dos
+    personas tocando el mismo repo, aparecen preguntas que sin una estrategia explícita cada quien
+    responde distinto: ¿cuándo integro mi trabajo al de los demás? ¿Puedo desplegar si mi rama no está
+    fusionada? ¿Qué pasa si mi feature tarda dos semanas en terminar?
+  </p>
+  <p>
+    Una <strong>estrategia de ramas</strong> es simplemente un acuerdo de equipo sobre esas preguntas,
+    aplicado además por <em>herramienta</em> (branch protection, Módulo 1) en vez de solo por memoria.
+  </p>
+</section>
+
+<section class="demo-section" id="github-flow">
+  <span class="section-kicker">// la que vas a usar en este curso</span>
+  <h2>GitHub Flow</h2>
+  <p>
+    Es el flujo más simple que funciona bien en equipos pequeños y con despliegue continuo — el que vas a
+    usar en tu proyecto de este curso. Reglas:
+  </p>
+  <ol style="margin: 0 0 1rem 1.25rem; color: var(--muted); line-height: 1.9;">
+    <li><code>main</code> siempre está en estado desplegable. Nunca queda roto.</li>
+    <li>Para cualquier cambio, se crea una rama con nombre descriptivo desde <code>main</code>: <code>feature/validacion-pago</code>, <code>fix/redondeo-centavos</code>.</li>
+    <li>Se hacen commits en esa rama y se abre un <strong>Pull Request</strong> apenas hay algo que discutir — no hace falta esperar a terminar.</li>
+    <li>Se revisa (Módulo 2, siguiente página), se corrige, y cuando el CI pasa (Módulo 5) y hay aprobación, se fusiona a <code>main</code>.</li>
+    <li>Se elimina la rama. <code>main</code> se despliega.</li>
+  </ol>
+  <div class="callout">
+    <strong>La clave operativa:</strong> ramas de vida <strong>corta</strong> (idealmente menos de 2-3 días).
+    Cuanto más vive una rama sin fusionarse, más diverge de <code>main</code> y más doloroso es el
+    merge — es la causa número uno de los conflictos que vas a resolver más adelante en este módulo.
+  </div>
+</section>
+
+<section class="demo-section" id="trunk-based">
+  <span class="section-kicker">// la versión de alta frecuencia</span>
+  <h2>Trunk-Based Development</h2>
+  <p>
+    Es una versión aún más agresiva: los desarrolladores integran a <code>main</code> (el "tronco",
+    <em>trunk</em>) <strong>al menos una vez al día</strong>, con ramas que viven horas, no días.
+    Funcionalidad incompleta se esconde detrás de <strong>feature flags</strong> en vez de vivir aislada en
+    una rama larga.
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>En GitHub Flow</th><th>En Trunk-Based</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>La feature incompleta vive en su propia rama hasta terminar.</td><td>La feature incompleta se integra a <code>main</code> ya, pero apagada por un feature flag.</td></tr>
+        <tr><td>El PR puede tardar días en fusionarse.</td><td>El PR se fusiona en horas; cambios grandes se parten en varios PRs pequeños.</td></tr>
+        <tr><td>Riesgo: ramas que divergen y generan conflictos grandes.</td><td>Riesgo: requiere más disciplina de feature flags y tests, o <code>main</code> se ensucia rápido.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Empresas con despliegues múltiples por día (piensa en equipos grandes de producto) suelen usar
+    Trunk-Based porque minimiza el "big bang" de integración. Para un proyecto de curso o un equipo
+    pequeño, GitHub Flow da el mismo beneficio con menos ceremonia — por eso es el que usarás aquí.
+  </p>
+</section>
+
+<section class="demo-section" id="gitflow">
+  <span class="section-kicker">// para reconocerlo, no para usarlo (todavía)</span>
+  <h2>¿Y GitFlow clásico?</h2>
+  <p>
+    GitFlow (Vincent Driessen, 2010) define ramas de larga duración separadas: <code>develop</code>,
+    <code>release/*</code>, <code>hotfix/*</code>, además de <code>main</code>. Fue muy popular porque
+    encaja bien con <strong>releases programados y versionados</strong> (software empaquetado, firmware,
+    librerías con versiones semánticas que varios consumidores fijan).
+  </p>
+  <p>
+    Hoy se usa menos para servicios web con despliegue continuo — es más ceremonia de la que la mayoría de
+    equipos necesita, y sus ramas largas generan justo el problema de conflictos que GitHub Flow evita.
+    Sigue siendo razonable si tu software se <strong>distribuye</strong> (una librería en PyPI, un binario
+    de C++) y necesitas mantener varias versiones mayores en paralelo — vale la pena reconocerlo, aunque
+    este curso no lo use como flujo por defecto.
+  </p>
+</section>
+
+<section class="demo-section" id="comparacion">
+  <span class="section-kicker">// resumen</span>
+  <h2>Comparación rápida</h2>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Estrategia</th><th>Vida de una rama</th><th>Complejidad</th><th>Adecuada para</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>GitHub Flow</strong></td><td>Días</td><td>Baja</td><td>Equipos pequeños, despliegue continuo — <strong>tu proyecto de curso</strong>.</td></tr>
+        <tr><td><strong>Trunk-Based</strong></td><td>Horas</td><td>Media (requiere feature flags)</td><td>Equipos grandes con múltiples despliegues diarios.</td></tr>
+        <tr><td><strong>GitFlow clásico</strong></td><td>Semanas/meses (<code>develop</code>, <code>release/*</code>)</td><td>Alta</td><td>Software versionado y distribuido con releases programados.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="demo-section" id="autoevaluacion">
+  <span class="section-kicker">// autoevaluación</span>
+  <h2>Autoevaluación</h2>
+  <div class="self-check">
+    <p class="sc-question">
+      Tu equipo despliega a producción varias veces al día y quiere minimizar ramas largas que generen
+      conflictos grandes, a costa de invertir en feature flags. ¿Qué estrategia describe mejor esa
+      elección?
+    </p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">GitFlow clásico</button>
+      <button class="sc-option" data-correct="false">Trabajar directo sobre <code>main</code> sin ramas</button>
+      <button class="sc-option" data-correct="true">Trunk-Based Development</button>
+      <button class="sc-option" data-correct="false">GitHub Flow con ramas de un mes</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: <strong>Trunk-Based Development</strong> es exactamente ese trade-off — ramas de horas,
+      integración muy frecuente a <code>main</code>, funcionalidad incompleta oculta tras feature flags en
+      vez de aislada en una rama larga.
+    </div>
+  </div>
+</section>
