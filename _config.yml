@@ -1,0 +1,6 @@
+title: Calidad de Software — Ingeniería
+description: Curso práctico de Calidad de Software orientado a producción industrial, con GitHub como columna vertebral del flujo de trabajo
+baseurl: "/SoftwareQuality"
+url: "https://ecuadros.github.io"
+theme: null
+markdown: kramdown
