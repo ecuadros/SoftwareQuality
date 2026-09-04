@@ -4,9 +4,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Interactive web site for a university-level Software Quality course (Ingeniería), taught practically and oriented to real industrial software production. Sister project to [Inteligencia-Artificial](https://github.com/ecuadros/Inteligencia-Artificial) and [Algebra-y-Geometria](https://github.com/ecuadros/Algebra-y-Geometria) — same visual language, same author, but a different interaction model: instead of in-browser algorithm demos, this course centers on a **real, growing Git repository per student/team** that accumulates quality practices module by module (tests → CI → static analysis → security → observability).
+Interactive web site for a university-level Software Quality course, framed as **Computer Science / Ciencia de la Computación** rather than "Ingeniería" — see the Branding/Positioning note below for why that word choice is deliberate. Taught practically and oriented to real industrial software production. Sister project to [Inteligencia-Artificial](https://github.com/ecuadros/Inteligencia-Artificial) and [Algebra-y-Geometria](https://github.com/ecuadros/Algebra-y-Geometria) — same visual language, same author, but a different interaction model: instead of in-browser algorithm demos, this course centers on a **real, growing Git repository per student/team** that accumulates quality practices module by module (tests → CI → static analysis → security → observability).
 
 Deployed as a static site via **GitHub Pages** (Jekyll). No backend. The site itself is documentation/course material — the actual practice happens in each student's own GitHub repo, built with the labs described here.
+
+## Branding / Positioning (important — read before writing copy)
+
+**Never use the word "Ingeniería" anywhere in this site's branding, titles, or body copy** — not
+in `_config.yml`, not in headings/eyebrows, not in prose. In the Peruvian/LatAm context it gets
+read as a pointer to the separate "Ingeniería de Software" degree program, which the target
+audience associates with people who *talk about* software without actually building it. That is
+the exact opposite of what this course is. Instead, the course is positioned as:
+
+- **Ciencia de la Computación** (Computer Science) as the academic frame.
+- **Desarrollo de software a escala industrial con excelentes prácticas** as the practical frame.
+
+Site title is `Calidad de Software — Desarrollo de Software`. When in doubt, prefer "desarrollo de
+software", "construcción de software", or naming the concrete practice (pruebas, CI/CD, code
+review) over any generic "ingeniería" framing — including in incidental prose like "como
+ingeniero" (→ "como desarrollador") or "en ingeniería de software" (→ "en el desarrollo de
+software").
 
 ## Pedagogical Model (important — read before adding content)
 
@@ -93,5 +110,5 @@ module_title: "Pruebas Unitarias y TDD"
 - The course site documents the labs; it does not need to *run* the practices in-browser (unlike the AI course's live demos) — the practice happens in each student's own GitHub repo.
 - Every module ties the concept back to a concrete production incident/cost-of-no-quality story before showing the practice, same narrative structure as the sister courses.
 - Python and C++ labs are presented side by side wherever code is involved — never one language silently standing in for the other.
-- Current status: **skeleton only, no lab content or cross-links yet** — module pages and their links are intentionally not wired up until content is written module by module.
+- Current status: **Módulos 1 and 2 have full content and are linked/marked "Disponible" from the index; Módulos 3-8 and the final project are still skeleton-only** — a module's links are wired up only once its content is written.
 - Spanish is the primary language for UI text (course is taught in Spanish).

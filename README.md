@@ -1,10 +1,10 @@
-# Calidad de Software — Ingeniería
+# Calidad de Software — Desarrollo de Software
 
-Curso práctico de Calidad de Software orientado a producción industrial. Sitio estático (Jekyll, GitHub Pages), hermano de [Inteligencia-Artificial](https://github.com/ecuadros/Inteligencia-Artificial) y [Algebra-y-Geometria](https://github.com/ecuadros/Algebra-y-Geometria).
+Curso práctico de Ciencia de la Computación centrado en calidad de software y desarrollo a escala industrial con excelentes prácticas. Sitio estático (Jekyll, GitHub Pages), hermano de [Inteligencia-Artificial](https://github.com/ecuadros/Inteligencia-Artificial) y [Algebra-y-Geometria](https://github.com/ecuadros/Algebra-y-Geometria).
 
 Ver [`CLAUDE.md`](CLAUDE.md) para la estructura completa del curso, el modelo pedagógico (labs sobre un repo real, Python + C++ en paralelo, evaluación por progreso de repositorio) y las instrucciones de desarrollo local.
 
-**Estado actual: esqueleto inicial, sin contenido de laboratorios ni enlaces entre módulos.**
+**Estado actual: Módulos 1 y 2 con contenido completo y enlazados. Módulos 3-8 y proyecto final en preparación.**
 
 ## Desarrollo local
 
