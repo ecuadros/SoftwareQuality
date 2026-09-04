@@ -121,6 +121,7 @@ next_title: "Deuda técnica: origen, medición, priorización"
   <span class="section-kicker">// autoevaluación</span>
   <h2>Autoevaluación</h2>
   <div class="self-check">
+    <span class="section-kicker">Pregunta 1 de 5</span>
     <p class="sc-question">
       Un sistema bancario nunca se cae y nunca calcula mal un monto, pero tarda 8 segundos en confirmar
       cada pago. ¿Qué característica de ISO/IEC 25010 está fallando principalmente?
@@ -136,6 +137,76 @@ next_title: "Deuda técnica: origen, medición, priorización"
       sistema es funcionalmente correcto y confiable (nunca falla, nunca calcula mal) — el problema es
       puramente de tiempo. Es un recordatorio de que "funciona bien" y "funciona rápido" son
       características distintas que se prueban distinto.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 2 de 5</span>
+    <p class="sc-question">
+      Según los estudios clásicos de costo de defectos (IBM, Barry Boehm), ¿en qué etapa del ciclo de
+      vida es más barato corregir un defecto?
+    </p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="true">Diseño</button>
+      <button class="sc-option" data-correct="false">Desarrollo</button>
+      <button class="sc-option" data-correct="false">QA / Integración</button>
+      <button class="sc-option" data-correct="false">Producción</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: en diseño el costo relativo es 1×. A partir de ahí crece de forma exponencial, porque en
+      cada etapa posterior ya hay más trabajo construido sobre el defecto que hay que deshacer.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 3 de 5</span>
+    <p class="sc-question">
+      Una API pública cambia el formato de un campo sin versionar y rompe a todos sus clientes. ¿Qué
+      característica de ISO/IEC 25010 está fallando principalmente?
+    </p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Usabilidad</button>
+      <button class="sc-option" data-correct="true">Compatibilidad</button>
+      <button class="sc-option" data-correct="false">Seguridad</button>
+      <button class="sc-option" data-correct="false">Portabilidad</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: <strong>compatibilidad</strong> es justamente "¿convive con otros sistemas?". Romper a
+      todos los consumidores de una API sin versionar es el ejemplo de manual de esta falla.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 4 de 5</span>
+    <p class="sc-question">
+      Un sistema que los usuarios aman (nunca falla, responde rápido) pero cuyo código interno nadie se
+      anima a modificar sin ayuda tiene:
+    </p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Alta calidad externa y alta calidad interna</button>
+      <button class="sc-option" data-correct="false">Baja calidad externa y alta calidad interna</button>
+      <button class="sc-option" data-correct="true">Alta calidad externa y baja calidad interna</button>
+      <button class="sc-option" data-correct="false">Baja calidad externa y baja calidad interna</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: el usuario percibe calidad externa (funciona, es rápido); el equipo sufre la calidad
+      interna (código difícil de mantener). Son ejes independientes, al menos por un tiempo.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 5 de 5</span>
+    <p class="sc-question">"Shift left" en calidad de software significa:</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="true">Mover la detección de defectos lo más temprano posible en el ciclo de vida</button>
+      <button class="sc-option" data-correct="false">Mover el despliegue a producción antes de terminar las pruebas</button>
+      <button class="sc-option" data-correct="false">Reducir el tamaño del equipo de QA</button>
+      <button class="sc-option" data-correct="false">Priorizar features nuevas sobre corrección de bugs</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: dado que el costo de un defecto crece exponencialmente cuanto más tarde se detecta,
+      "mover a la izquierda" la detección (tests, code review, análisis estático) es la estrategia central
+      de casi todo este curso.
     </div>
   </div>
 </section>

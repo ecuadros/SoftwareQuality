@@ -123,6 +123,7 @@ next_title: "Pull Requests, code review y CODEOWNERS"
   <span class="section-kicker">// autoevaluación</span>
   <h2>Autoevaluación</h2>
   <div class="self-check">
+    <span class="section-kicker">Pregunta 1 de 5</span>
     <p class="sc-question">
       Tu equipo despliega a producción varias veces al día y quiere minimizar ramas largas que generen
       conflictos grandes, a costa de invertir en feature flags. ¿Qué estrategia describe mejor esa
@@ -138,6 +139,66 @@ next_title: "Pull Requests, code review y CODEOWNERS"
       Correcto: <strong>Trunk-Based Development</strong> es exactamente ese trade-off — ramas de horas,
       integración muy frecuente a <code>main</code>, funcionalidad incompleta oculta tras feature flags en
       vez de aislada en una rama larga.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 2 de 5</span>
+    <p class="sc-question">En GitHub Flow, ¿qué estado debe mantener siempre la rama <code>main</code>?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="true">Debe estar siempre en estado desplegable</button>
+      <button class="sc-option" data-correct="false">Debe tener al menos tres ramas activas fusionadas parcialmente</button>
+      <button class="sc-option" data-correct="false">Debe estar bloqueada para lectura fuera del equipo</button>
+      <button class="sc-option" data-correct="false">Debe fusionarse solo una vez por semana</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: es la primera regla de GitHub Flow. Todo el resto del flujo (ramas cortas, PRs, CI) existe
+      para proteger esa invariante.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 3 de 5</span>
+    <p class="sc-question">Según lo visto en esta página, ¿cuál es la causa número uno de conflictos de merge grandes y dolorosos?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Usar Conventional Commits</button>
+      <button class="sc-option" data-correct="true">Ramas de vida larga que divergen mucho de <code>main</code> antes de fusionarse</button>
+      <button class="sc-option" data-correct="false">Tener demasiados colaboradores en el repo</button>
+      <button class="sc-option" data-correct="false">Usar un archivo CODEOWNERS</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: cuanto más tiempo vive una rama sin integrarse, más cambios en paralelo acumula
+      <code>main</code> mientras tanto — y más grande es el conflicto al fusionar.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 4 de 5</span>
+    <p class="sc-question">¿Qué mecanismo usa Trunk-Based Development para integrar código incompleto directamente a <code>main</code> sin exponerlo a los usuarios finales?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Ramas de release de larga duración</button>
+      <button class="sc-option" data-correct="true">Feature flags</button>
+      <button class="sc-option" data-correct="false">Tags de Git</button>
+      <button class="sc-option" data-correct="false">Pull requests marcados como borrador</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: el código vive en <code>main</code> ya, pero apagado detrás de un flag — se activa cuando
+      la feature está lista, sin necesidad de una rama larga esperando.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 5 de 5</span>
+    <p class="sc-question">¿En qué escenario sigue siendo razonable usar GitFlow clásico, según lo visto en esta página?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Un servicio web con despliegue continuo varias veces al día</button>
+      <button class="sc-option" data-correct="true">Software distribuido y versionado que debe mantener varias versiones mayores en paralelo</button>
+      <button class="sc-option" data-correct="false">Un proyecto de un solo desarrollador sin releases formales</button>
+      <button class="sc-option" data-correct="false">Un prototipo desechable de una semana</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: GitFlow encaja con releases programados y versionados (librerías, firmware) donde varios
+      consumidores fijan una versión específica — no con despliegue continuo.
     </div>
   </div>
 </section>

@@ -18,7 +18,7 @@ title: Inicio
     <p class="hero-description">
       Cada módulo agrega una capa de calidad real al <strong>mismo repositorio</strong>
       del alumno: pruebas, integración continua, análisis estático, seguridad y
-      observabilidad &mdash;en <strong>Python y C++ en paralelo</strong>&mdash;,
+      observabilidad &mdash;en <strong>Python, C++ y Flutter/Dart en paralelo</strong>&mdash;,
       hasta terminar con un pipeline completo de producción, no ejercicios sueltos.
       El flujo de trabajo colaborativo en <strong>GitHub</strong> (ramas, pull requests,
       code review, Actions) se practica desde la semana 1, no se explica solamente. Es un
@@ -120,6 +120,7 @@ title: Inicio
         <li>TDD: red-green-refactor sobre la misma feature</li>
         <li>Python: pytest + coverage.py</li>
         <li>C++: GoogleTest/Catch2 + gcov/lcov</li>
+        <li>Flutter: flutter_test + coverage</li>
       </ul>
 
       <div class="tag-list">
@@ -145,7 +146,7 @@ title: Inicio
 
       <ul class="demo-list">
         <li>Pruebas de integración y contract testing</li>
-        <li>BDD con Gherkin: Python (Behave) y C++ (fixtures + CTest)</li>
+        <li>BDD con Gherkin: Python (Behave), C++ (fixtures+CTest), Flutter (integration_test)</li>
         <li>Suite E2E sobre el proyecto del curso</li>
       </ul>
 
@@ -172,7 +173,7 @@ title: Inicio
 
       <ul class="demo-list">
         <li>Pipelines de GitHub Actions: build → test → gate de calidad → deploy</li>
-        <li>Un pipeline por lenguaje (pip/pytest y CMake/CTest)</li>
+        <li>Un pipeline por stack (pip/pytest, CMake/CTest, flutter test)</li>
         <li>Versionado semántico y estrategias de despliegue</li>
       </ul>
 
@@ -198,7 +199,7 @@ title: Inicio
       </div>
 
       <ul class="demo-list">
-        <li>Linters y análisis estático integrados al PR</li>
+        <li>Linters por stack: pylint/mypy, clang-tidy/cppcheck, dart analyze</li>
         <li>SonarCloud, complejidad ciclomática, code smells</li>
         <li>Catálogo de refactorización y seguimiento de deuda técnica</li>
       </ul>
@@ -226,7 +227,7 @@ title: Inicio
 
       <ul class="demo-list">
         <li>Dependency scanning y SAST en el pipeline</li>
-        <li>Sanitizers y Valgrind en C++, pruebas de carga</li>
+        <li>Sanitizers/Valgrind (C++), pub audit (Flutter), pruebas de carga</li>
         <li>Logging estructurado y SLIs/SLOs</li>
       </ul>
 

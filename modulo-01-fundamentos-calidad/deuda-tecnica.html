@@ -116,6 +116,7 @@ next_title: "Laboratorio: setup del repo en GitHub"
   <span class="section-kicker">// autoevaluación</span>
   <h2>Autoevaluación</h2>
   <div class="self-check">
+    <span class="section-kicker">Pregunta 1 de 5</span>
     <p class="sc-question">
       Un equipo lanza una función de emergencia sin tests para cumplir un deadline legal, y crea un issue
       documentando exactamente qué se omitió y por qué. ¿Cómo se clasifica esta deuda en el cuadrante de Fowler?
@@ -131,6 +132,76 @@ next_title: "Laboratorio: setup del repo en GitHub"
       <strong>prudente</strong> porque la decisión fue razonable dado el contexto (deadline legal) y quedó
       documentada para pagarse después. Habría sido imprudente si nadie hubiera dejado registro de la
       omisión.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 2 de 5</span>
+    <p class="sc-question">
+      Ward Cunningham comparó la deuda técnica con pedir un préstamo. En esa metáfora, ¿qué representa el
+      "interés"?
+    </p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="true">El costo extra que cada cambio futuro tendrá mientras la deuda no se pague</button>
+      <button class="sc-option" data-correct="false">El salario del equipo de desarrollo</button>
+      <button class="sc-option" data-correct="false">El tiempo que tarda en aprobarse un Pull Request</button>
+      <button class="sc-option" data-correct="false">El costo de infraestructura en la nube</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: igual que un préstamo financiero, la deuda técnica no es el problema en sí — es que cada
+      cambio posterior sobre ese código cuesta un poco más mientras la deuda siga sin pagarse.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 3 de 5</span>
+    <p class="sc-question">
+      Un desarrollador junior introduce un acoplamiento fuerte entre dos módulos porque nunca aprendió el
+      patrón de diseño adecuado, sin darse cuenta del problema que está creando. ¿Cómo se clasifica esta deuda?
+    </p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Prudente y deliberada</button>
+      <button class="sc-option" data-correct="false">Imprudente y deliberada</button>
+      <button class="sc-option" data-correct="false">Prudente e inadvertida</button>
+      <button class="sc-option" data-correct="true">Imprudente e inadvertida</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: es <strong>inadvertida</strong> porque no sabía que lo estaba haciendo, e
+      <strong>imprudente</strong> porque la causa es falta de experiencia, no una decisión razonada. Es el
+      cuadrante más peligroso: nadie sabe que la deuda existe hasta que ya es costosa.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 4 de 5</span>
+    <p class="sc-question">El índice SQALE que calculan herramientas como SonarQube expresa la deuda técnica en:</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Número de líneas de código</button>
+      <button class="sc-option" data-correct="true">Tiempo estimado de remediación, en horas o días</button>
+      <button class="sc-option" data-correct="false">Cantidad de commits del repositorio</button>
+      <button class="sc-option" data-correct="false">Porcentaje de cobertura de tests</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: SQALE traduce cada code smell detectado a un tiempo estimado de corrección, lo que permite
+      comparar la deuda relativa entre proyectos o módulos. Lo integrarás de verdad en el Módulo 6.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 5 de 5</span>
+    <p class="sc-question">
+      Un módulo tiene varios code smells detectados por el linter, pero nadie lo ha modificado en dos años
+      y no está en el roadmap actual. Según los criterios de priorización vistos en esta página:
+    </p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Debe pagarse de inmediato porque tiene code smells</button>
+      <button class="sc-option" data-correct="true">Puede esperar — no está generando interés activo mientras no se toque</button>
+      <button class="sc-option" data-correct="false">El módulo completo debe eliminarse</button>
+      <button class="sc-option" data-correct="false">Es imposible de medir sin SonarQube</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: la señal clave es la <strong>frecuencia de cambio</strong>. Código con deuda que casi nunca
+      se toca no está costando nada activamente — no es la prioridad, aunque el linter lo marque.
     </div>
   </div>
 </section>

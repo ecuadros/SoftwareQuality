@@ -24,6 +24,7 @@ next_title: "Estrategias de ramas: GitHub Flow y Trunk-Based"
   <a href="#plantillas">Plantillas de Issue y PR</a>
   <a href="#editorconfig">.editorconfig</a>
   <a href="#checklist-entrega">Checklist de entrega</a>
+  <a href="#autoevaluacion">Autoevaluación</a>
 </nav>
 
 <section class="demo-section" id="prerequisitos">
@@ -33,7 +34,7 @@ next_title: "Estrategias de ramas: GitHub Flow y Trunk-Based"
     <li>Cuenta de GitHub personal (no de organización) — este repo lo posees tú.</li>
     <li><code>git</code> instalado y configurado (<code>git config --global user.name/user.email</code>).</li>
     <li>Recomendado: <a href="https://cli.github.com/" target="_blank" rel="noopener">GitHub CLI</a> (<code>gh</code>) instalado y autenticado con <code>gh auth login</code> — lo vas a usar todo el curso.</li>
-    <li>Decide desde ya si tu proyecto será en <strong>Python</strong>, en <strong>C++</strong>, o en ambos en paralelo (recomendado para aprovechar todos los labs del curso).</li>
+    <li>Decide desde ya si tu proyecto será en <strong>Python</strong>, en <strong>C++</strong>, en <strong>Flutter/Dart</strong>, o en varios en paralelo (recomendado para aprovechar todos los labs del curso).</li>
   </ul>
 </section>
 
@@ -124,7 +125,7 @@ labels: bug
 1.
 2.
 
-**Entorno** (SO, versión de Python/C++, commit)</pre>
+**Entorno** (SO, versión de Python/C++/Flutter, commit)</pre>
   </div>
 
   <div class="code-block">
@@ -183,5 +184,86 @@ trim_trailing_whitespace = false</pre>
       <li data-item="editorconfig"><input type="checkbox" id="ce-4" /><label for="ce-4"><code>.editorconfig</code> en la raíz del repo.</label></li>
       <li data-item="issue-deuda"><input type="checkbox" id="ce-5" /><label for="ce-5">Al menos un Issue con label de deuda técnica registrando una decisión tomada a propósito.</label></li>
     </ul>
+  </div>
+</section>
+
+<section class="demo-section" id="autoevaluacion">
+  <span class="section-kicker">// autoevaluación</span>
+  <h2>Autoevaluación</h2>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 1 de 5</span>
+    <p class="sc-question">¿Por qué el repo del curso debe crearse como público en vez de privado?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Porque GitHub no permite repos privados gratuitos</button>
+      <button class="sc-option" data-correct="true">Para que la evaluación por progreso de repositorio sea auditable</button>
+      <button class="sc-option" data-correct="false">Porque los repos públicos son más rápidos</button>
+      <button class="sc-option" data-correct="false">No hay ninguna razón, es indistinto</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: este curso te evalúa por el historial real de tu repo (<code>CLAUDE.md</code>), no por
+      exámenes. Un repo público permite que ese progreso sea verificable en cualquier momento.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 2 de 5</span>
+    <p class="sc-question">¿Qué logra activar <code>Require a pull request before merging</code> en la protección de la rama <code>main</code>?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Que los PRs se fusionen automáticamente sin revisión</button>
+      <button class="sc-option" data-correct="true">Que nadie, ni siquiera el dueño del repo, pueda hacer push directo a <code>main</code></button>
+      <button class="sc-option" data-correct="false">Que se dupliquen los commits al fusionar</button>
+      <button class="sc-option" data-correct="false">Que se prohíba crear ramas nuevas</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: obliga a que todo cambio pase por un Pull Request, incluso los tuyos — es la regla que
+      hace el resto del flujo (Módulo 2) obligatorio por herramienta, no por disciplina personal.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 3 de 5</span>
+    <p class="sc-question"><code>Require status checks to pass before merging</code> queda activado pero vacío (sin ningún check todavía) hasta que llegues a:</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Módulo 3 (Pruebas Unitarias)</button>
+      <button class="sc-option" data-correct="true">Módulo 5 (Integración y Entrega Continua)</button>
+      <button class="sc-option" data-correct="false">Módulo 6 (Análisis Estático)</button>
+      <button class="sc-option" data-correct="false">Módulo 8 (Procesos)</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: los status checks los llenan los pipelines de <strong>GitHub Actions</strong>, que recién
+      construyes en el Módulo 5. Activar la regla desde ya significa que en cuanto tengas CI, será
+      obligatoria automáticamente.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 4 de 5</span>
+    <p class="sc-question">¿Cuál es el propósito principal de un archivo <code>.editorconfig</code>?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Reemplazar al linter y al analizador estático</button>
+      <button class="sc-option" data-correct="true">Eliminar discusiones triviales de estilo (espacios/tabs, fin de línea) entre distintos editores</button>
+      <button class="sc-option" data-correct="false">Configurar las credenciales de acceso a GitHub</button>
+      <button class="sc-option" data-correct="false">Definir las dependencias del proyecto</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: es la forma más barata de calidad — resuelve algo que ningún revisor debería tener que
+      comentar nunca. El análisis estático "de verdad" (linters, code smells) llega en el Módulo 6.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 5 de 5</span>
+    <p class="sc-question">Un Issue con label de deuda técnica, documentando una decisión tomada a propósito, es parte de la rúbrica de este módulo porque:</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Es obligatorio tener al menos un bug reportado en todo repo</button>
+      <button class="sc-option" data-correct="true">Hace visible una decisión de deuda prudente-deliberada en vez de esconderla</button>
+      <button class="sc-option" data-correct="false">Es un requisito técnico de GitHub Pages</button>
+      <button class="sc-option" data-correct="false">Sirve para bloquear el merge de cualquier PR</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: como viste en la página anterior (deuda técnica), el problema nunca es tomar deuda a
+      propósito — es no dejar registro de que existe. El Issue es ese registro.
+    </div>
   </div>
 </section>

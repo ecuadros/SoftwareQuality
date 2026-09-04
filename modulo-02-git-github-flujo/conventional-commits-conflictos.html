@@ -149,6 +149,7 @@ git merge feature/rama-b</pre>
   <span class="section-kicker">// autoevaluación</span>
   <h2>Autoevaluación</h2>
   <div class="self-check">
+    <span class="section-kicker">Pregunta 1 de 5</span>
     <p class="sc-question">
       Ves este marcador en un archivo tras un <code>git merge</code>: <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</code>.
       ¿Qué representa el bloque de código que viene justo después de esa línea, antes del <code>=======</code>?
@@ -163,6 +164,66 @@ git merge feature/rama-b</pre>
       es tu rama actual. Lo que está entre <code>=======</code> y <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt; nombre-rama</code>
       es la rama que estás fusionando. Git nunca decide "cuál es la correcta" por ti — solo te muestra
       ambas para que elijas.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 2 de 5</span>
+    <p class="sc-question">¿Qué tipo de Conventional Commit usarías para un cambio que agrega tests nuevos sin tocar código de producción?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false"><code>feat</code></button>
+      <button class="sc-option" data-correct="false"><code>fix</code></button>
+      <button class="sc-option" data-correct="true"><code>test</code></button>
+      <button class="sc-option" data-correct="false"><code>chore</code></button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: <code>test</code> es exactamente para eso — agregar o corregir tests sin alterar el
+      comportamiento del código de producción.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 3 de 5</span>
+    <p class="sc-question">Un commit dice: "agrega validación de tarjeta y corrige un bug de redondeo". Según la regla práctica vista en esta página, ¿qué problema tiene?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Ninguno, es un buen mensaje de commit</button>
+      <button class="sc-option" data-correct="true">Probablemente debería ser dos commits distintos, uno por cada cambio</button>
+      <button class="sc-option" data-correct="false">Debería usar el tipo <code>chore</code> en vez de <code>feat</code></button>
+      <button class="sc-option" data-correct="false">Le falta indicar el alcance (scope) entre paréntesis</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: si el mensaje necesita un "y" para describirlo, son dos cambios. Un commit debería poder
+      revertirse solo, sin arrastrar algo no relacionado.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 4 de 5</span>
+    <p class="sc-question">Al resolver un conflicto de merge, ¿qué comando le indica a Git que ya decidiste cuál versión del código es la correcta?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false"><code>git merge --abort</code></button>
+      <button class="sc-option" data-correct="true"><code>git add archivo-resuelto</code></button>
+      <button class="sc-option" data-correct="false"><code>git reset --hard</code></button>
+      <button class="sc-option" data-correct="false"><code>git branch -d</code></button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: después de eliminar los marcadores y dejar el código final, <code>git add</code> marca ese
+      archivo como resuelto. Recién entonces <code>git commit</code> completa el merge.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 5 de 5</span>
+    <p class="sc-question">¿Por qué se recomienda correr los tests localmente después de resolver un conflicto, antes de hacer push?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Porque Git lo exige automáticamente antes de permitir el push</button>
+      <button class="sc-option" data-correct="true">Porque un conflicto resuelto sintácticamente puede seguir estando semánticamente mal</button>
+      <button class="sc-option" data-correct="false">Porque así se genera el changelog automáticamente</button>
+      <button class="sc-option" data-correct="false">Porque GitHub Actions no existe todavía en este módulo</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: elegir "la versión correcta" de un conflicto no garantiza que el programa siga
+      funcionando — solo los tests confirman que el resultado combinado realmente funciona.
     </div>
   </div>
 </section>

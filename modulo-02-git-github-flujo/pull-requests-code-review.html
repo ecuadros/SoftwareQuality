@@ -134,6 +134,7 @@ next_title: "Conventional Commits y resolución de conflictos"
   <span class="section-kicker">// autoevaluación</span>
   <h2>Autoevaluación</h2>
   <div class="self-check">
+    <span class="section-kicker">Pregunta 1 de 5</span>
     <p class="sc-question">
       Un revisor comenta: "Yo habría usado un <code>for</code> en vez de una list comprehension, pero
       ambos funcionan igual de bien y son igual de legibles." ¿Debería este comentario bloquear el merge?
@@ -147,6 +148,66 @@ next_title: "Conventional Commits y resolución de conflictos"
       Correcto: si ambas formas son igual de correctas y legibles, es una preferencia personal. Bloquear
       merges por esto desgasta la relación de equipo y hace que la gente deje de pedir revisión a tiempo.
       Guarda el bloqueo para correctitud, tests, seguridad y mantenibilidad real.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 2 de 5</span>
+    <p class="sc-question">¿Por qué se recomienda mantener los Pull Requests pequeños?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Porque GitHub tiene un límite técnico de líneas por PR</button>
+      <button class="sc-option" data-correct="true">Porque la atención humana se degrada con diffs grandes y el revisor empieza a aprobar "de confianza"</button>
+      <button class="sc-option" data-correct="false">Porque los PRs grandes tardan más en clonarse localmente</button>
+      <button class="sc-option" data-correct="false">Porque los PRs pequeños no necesitan pasar por CI</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: no es una limitación técnica, es cognitiva. Un revisor cansado de leer 500 líneas aprueba
+      distinto a uno que lee 50 — el PR pequeño protege la calidad real de la revisión.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 3 de 5</span>
+    <p class="sc-question">Un archivo <code>CODEOWNERS</code> combinado con "Require review from Code Owners" en branch protection logra que:</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Cualquier persona pueda aprobar cualquier PR sin restricción</button>
+      <button class="sc-option" data-correct="true">La revisión de la persona asignada a esos archivos sea obligatoria, no opcional</button>
+      <button class="sc-option" data-correct="false">Se elimine la necesidad de abrir Pull Requests</button>
+      <button class="sc-option" data-correct="false">Los commits se firmen criptográficamente de forma automática</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: sin esa combinación, CODEOWNERS solo sugiere revisores; con branch protection, GitHub
+      bloquea el merge hasta que esa persona específica aprueba.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 4 de 5</span>
+    <p class="sc-question">Según el checklist mental del revisor visto en esta página, ¿cuál de estas situaciones SÍ debería bloquear un merge?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Un nombre de variable que el revisor hubiera elegido distinto</button>
+      <button class="sc-option" data-correct="true">Falta un caso de prueba obvio para lógica nueva y riesgosa</button>
+      <button class="sc-option" data-correct="false">Una preferencia de formato que el linter ya debería atrapar</button>
+      <button class="sc-option" data-correct="false">Un comentario con una opinión personal sin justificación técnica</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: la ausencia de un test para un caso obvio es un riesgo de correctitud real, no una
+      preferencia — es exactamente el tipo de hallazgo que justifica frenar el merge.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 5 de 5</span>
+    <p class="sc-question">¿Qué riesgo describe la práctica de "aprobar sin leer de verdad porque confío en quien lo escribió"?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Mejora la velocidad del equipo sin ningún costo</button>
+      <button class="sc-option" data-correct="true">Convierte la revisión obligatoria en "teatro de proceso" sin protección real</button>
+      <button class="sc-option" data-correct="false">Es la forma correcta de revisar código entre expertos</button>
+      <button class="sc-option" data-correct="false">Es un requisito de GitHub Flow</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: si branch protection exige aprobación pero nadie lee el diff, la regla deja de proteger
+      calidad — solo agrega un clic sin sustancia.
     </div>
   </div>
 </section>
