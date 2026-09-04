@@ -8,6 +8,8 @@ Interactive web site for a university-level Software Quality course, framed as *
 
 Deployed as a static site via **GitHub Pages** (Jekyll). No backend. The site itself is documentation/course material — the actual practice happens in each student's own GitHub repo, built with the labs described here.
 
+**Base repository for the 2026-II course offering**: [github.com/ecuadros/2026-II-CS-UNI-SoftwareQuality](https://github.com/ecuadros/2026-II-CS-UNI-SoftwareQuality) — the official starting point for the semester (syllabus, announcements, schedule), separate from this Jekyll site repo. Linked prominently from the homepage, right below the hero.
+
 ## Branding / Positioning (important — read before writing copy)
 
 **Never use the word "Ingeniería" anywhere in this site's branding, titles, or body copy** — not
