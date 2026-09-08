@@ -1,0 +1,301 @@
+---
+layout: lab
+title: "BDD con Gherkin en los Tres Stacks"
+subtitle: "Given-When-Then no es sintaxis obligatoria — es un formato para que negocio y desarrollo describan el mismo comportamiento sin ambigüedad."
+eyebrow: "Módulo 4 · Pruebas de Integración, E2E y BDD"
+module: 4
+module_title: "Pruebas de Integración, E2E y BDD"
+prev_url: "/modulo-04-integracion-e2e-bdd/pruebas-integracion-contract-testing.html"
+prev_title: "Pruebas de integración y contract testing"
+next_url: "/modulo-04-integracion-e2e-bdd/suite-e2e-laboratorio.html"
+next_title: "Suite E2E y laboratorio"
+---
+
+<nav class="demo-toc">
+  <a href="#que-es-bdd">Qué es BDD y para qué sirve Gherkin</a>
+  <a href="#feature-gherkin">El feature: cupón de descuento en el carrito</a>
+  <a href="#python-behave">Python — Behave (Gherkin real)</a>
+  <a href="#cpp-fixtures">C++ — GoogleTest fixtures + CTest</a>
+  <a href="#flutter-integration">Flutter/Dart — integration_test y golden tests</a>
+  <a href="#comparacion-bdd">Lo que cada stack sí y no puede hacer</a>
+  <a href="#autoevaluacion">Autoevaluación</a>
+</nav>
+
+<section class="demo-section" id="que-es-bdd">
+  <span class="section-kicker">// el problema que resuelve</span>
+  <h2>Qué es BDD y para qué sirve Gherkin</h2>
+  <p>
+    <strong>Behavior-Driven Development</strong> extiende TDD (Módulo 3) hacia un lenguaje compartido entre
+    quien define el negocio y quien programa. En vez de que el requisito viva solo en la cabeza de una
+    persona ("el descuento debería aplicarse... creo que así"), se escribe como un escenario ejecutable
+    usando <strong>Gherkin</strong>: <code>Given</code> (dado un contexto), <code>When</code> (cuando ocurre
+    una acción), <code>Then</code> (entonces se espera un resultado).
+  </p>
+  <div class="callout">
+    <strong>La especificación es el test.</strong> No es documentación que se desactualiza — si el
+    comportamiento cambia y nadie actualiza el escenario, el test falla y lo hace evidente. Eso es lo que
+    la diferencia de un documento de requisitos tradicional.
+  </div>
+</section>
+
+<section class="demo-section" id="feature-gherkin">
+  <span class="section-kicker">// el escenario</span>
+  <h2>El feature: cupón de descuento en el carrito</h2>
+  <p>
+    Vas a ver el mismo escenario de negocio implementado con la herramienta apropiada de cada stack — que,
+    como vas a ver, <strong>no es la misma herramienta en los tres casos</strong>, y esa diferencia es
+    justamente parte de lo que hay que aprender a reconocer.
+  </p>
+  <div class="code-block">
+    <div class="code-block-label">carrito.feature</div>
+    <pre>Feature: Aplicar cupón de descuento en el carrito
+
+  Scenario: Cupón válido aplicado a una compra que califica
+    Given un carrito con un monto total de 120.00
+    And un cupón "VIP10" válido que otorga 10% de descuento
+    When el cliente aplica el cupón "VIP10" al carrito
+    Then el monto total del carrito debe ser 108.00
+
+  Scenario: Cupón expirado es rechazado
+    Given un carrito con un monto total de 50.00
+    And un cupón "PROMO-VIEJO" que ya expiró
+    When el cliente aplica el cupón "PROMO-VIEJO" al carrito
+    Then el sistema rechaza el cupón
+    And el monto total del carrito permanece en 50.00</pre>
+  </div>
+</section>
+
+<section class="demo-section" id="python-behave">
+  <span class="section-kicker">// stack 1 de 3 — Gherkin ejecutado literalmente</span>
+  <h2>Python — Behave</h2>
+  <p>
+    Behave ejecuta el archivo <code>.feature</code> tal cual, palabra por palabra, contra "step
+    definitions" en Python que implementan cada línea. Es la única de las tres herramientas de este módulo
+    que corre Gherkin de forma literal.
+  </p>
+  <div class="code-block">
+    <div class="code-block-label">features/steps/carrito_steps.py</div>
+    <pre>from behave import given, when, then
+from carrito import Carrito
+
+@given('un carrito con un monto total de {monto:g}')
+def step_impl(context, monto):
+    context.carrito = Carrito(monto_total=monto)
+
+@given('un cupón "{codigo}" válido que otorga {porcentaje:d}% de descuento')
+def step_impl(context, codigo, porcentaje):
+    context.cupon = Cupon(codigo, porcentaje, expirado=False)
+
+@when('el cliente aplica el cupón "{codigo}" al carrito')
+def step_impl(context, codigo):
+    context.resultado = context.carrito.aplicar_cupon(context.cupon)
+
+@then('el monto total del carrito debe ser {monto:g}')
+def step_impl(context, monto):
+    assert context.carrito.monto_total == monto</pre>
+  </div>
+  <div class="code-block">
+    <div class="code-block-label">bash</div>
+    <pre>$ behave
+<span class="cm"># 2 scenarios passed, 0 failed</span></pre>
+  </div>
+</section>
+
+<section class="demo-section" id="cpp-fixtures">
+  <span class="section-kicker">// stack 2 de 3 — la práctica equivalente, no Gherkin literal</span>
+  <h2>C++ — GoogleTest fixtures + CTest</h2>
+  <div class="callout warn">
+    <strong>Diferencia importante:</strong> el ecosistema de C++ no tiene un corredor de Gherkin maduro y
+    ampliamente adoptado como Behave. En vez de forzar una herramienta poco mantenida, la práctica
+    equivalente en C++ es usar <strong>fixtures de GoogleTest</strong> (<code>TEST_F</code>) con nombres que
+    reflejan explícitamente la estructura Given-When-Then del mismo escenario de negocio — el comportamiento
+    especificado es idéntico, el formato de archivo <code>.feature</code> no se usa.
+  </div>
+  <div class="code-block">
+    <div class="code-block-label">test_carrito.cpp</div>
+    <pre><span class="cm">#include &lt;gtest/gtest.h&gt;</span>
+#include "carrito.h"
+
+class CarritoConCupon : public ::testing::Test {
+protected:
+    <span class="cm">// "Given": el contexto compartido por los escenarios de este fixture</span>
+    Carrito carrito{120.00};
+};
+
+TEST_F(CarritoConCupon, CuponValidoAplicaDescuento) {
+    <span class="cm">// Given un cupón "VIP10" válido que otorga 10% de descuento</span>
+    Cupon vip10("VIP10", 10, /*expirado=*/false);
+
+    <span class="cm">// When el cliente aplica el cupón al carrito</span>
+    carrito.aplicarCupon(vip10);
+
+    <span class="cm">// Then el monto total del carrito debe ser 108.00</span>
+    EXPECT_DOUBLE_EQ(carrito.montoTotal(), 108.00);
+}
+
+TEST_F(CarritoConCupon, CuponExpiradoEsRechazado) {
+    Cupon viejo("PROMO-VIEJO", 20, /*expirado=*/true);
+
+    bool aceptado = carrito.aplicarCupon(viejo);
+
+    EXPECT_FALSE(aceptado);
+    EXPECT_DOUBLE_EQ(carrito.montoTotal(), 120.00);
+}</pre>
+  </div>
+  <div class="code-block">
+    <div class="code-block-label">bash</div>
+    <pre>$ ctest --test-dir build --output-on-failure
+<span class="cm"># 2/2 tests pasando</span></pre>
+  </div>
+</section>
+
+<section class="demo-section" id="flutter-integration">
+  <span class="section-kicker">// stack 3 de 3 — el mismo comportamiento, a nivel de UI</span>
+  <h2>Flutter/Dart — integration_test y golden tests</h2>
+  <p>
+    En Flutter, la forma natural de expresar este mismo escenario de negocio a nivel de comportamiento
+    observable es un <strong>test de integración de widgets</strong>: en vez de llamar directamente a la
+    lógica, simula lo que el usuario realmente ve y toca — escribir el código de cupón y presionar
+    "Aplicar".
+  </p>
+  <div class="code-block">
+    <div class="code-block-label">integration_test/carrito_cupon_test.dart</div>
+    <pre><span class="cm">import 'package:flutter_test/flutter_test.dart';</span>
+import 'package:integration_test/integration_test.dart';
+import 'package:mi_app/main.dart' as app;
+
+void main() {
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
+  testWidgets('cupón válido aplica el descuento al monto total', (tester) async {
+    <span class="cm">// Given un carrito con un monto total de 120.00 (estado inicial de la app)</span>
+    app.main();
+    await tester.pumpAndSettle();
+    expect(find.text('S/ 120.00'), findsOneWidget);
+
+    <span class="cm">// When el cliente aplica el cupón "VIP10"</span>
+    await tester.enterText(find.byKey(const Key('campo-cupon')), 'VIP10');
+    await tester.tap(find.byKey(const Key('boton-aplicar-cupon')));
+    await tester.pumpAndSettle();
+
+    <span class="cm">// Then el monto total del carrito debe ser 108.00</span>
+    expect(find.text('S/ 108.00'), findsOneWidget);
+  });
+}</pre>
+  </div>
+  <p>
+    Un <strong>golden test</strong> complementa esto verificando que el widget del resumen del carrito se
+    ve exactamente como se espera tras aplicar el cupón — comparando un render actual contra una imagen de
+    referencia ("golden file") guardada en el repo:
+  </p>
+  <div class="code-block">
+    <div class="code-block-label">bash</div>
+    <pre>$ flutter test --update-goldens   <span class="cm"># genera la imagen de referencia la primera vez</span>
+$ flutter test                    <span class="cm"># compara contra la referencia en cada corrida siguiente</span></pre>
+  </div>
+</section>
+
+<section class="demo-section" id="comparacion-bdd">
+  <span class="section-kicker">// el punto de la comparación</span>
+  <h2>Lo que cada stack sí y no puede hacer</h2>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th></th><th>Python (Behave)</th><th>C++ (GoogleTest fixtures)</th><th>Flutter/Dart (integration_test)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>¿Corre Gherkin literal?</strong></td><td>Sí — el <code>.feature</code> es el test</td><td>No — el escenario se traduce a nombres de test y comentarios</td><td>No — el escenario se traduce a pasos de interacción con la UI</td></tr>
+        <tr><td><strong>Nivel probado</strong></td><td>Lógica de negocio directa</td><td>Lógica de negocio directa</td><td>UI completa, como la usa el usuario</td></tr>
+        <tr><td><strong>Riesgo si se fuerza la herramienta "equivalente"</strong></td><td>—</td><td>Adoptar un runner de Gherkin poco mantenido solo por "consistencia" añade fragilidad sin beneficio real</td><td>Usar solo pruebas de lógica pura perdería la cobertura del flujo real de UI, que es donde más bugs de integración aparecen en apps móviles</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout accent2">
+    La lección de este módulo no es "Gherkin en todos lados a la fuerza" — es que el <strong>mismo
+    comportamiento de negocio</strong> se puede especificar de forma ejecutable con la herramienta que mejor
+    encaja en cada ecosistema, sin perder precisión ni cobertura.
+  </div>
+</section>
+
+<section class="demo-section" id="autoevaluacion">
+  <span class="section-kicker">// autoevaluación</span>
+  <h2>Autoevaluación</h2>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 1 de 5</span>
+    <p class="sc-question">¿Cuál de los tres stacks vistos en esta página ejecuta el archivo <code>.feature</code> de Gherkin de forma literal?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="true">Python, con Behave</button>
+      <button class="sc-option" data-correct="false">C++, con GoogleTest fixtures</button>
+      <button class="sc-option" data-correct="false">Flutter/Dart, con integration_test</button>
+      <button class="sc-option" data-correct="false">Los tres ejecutan el mismo archivo <code>.feature</code></button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: Behave es el único de los tres que corre el archivo <code>.feature</code> palabra por
+      palabra contra step definitions. C++ y Flutter/Dart expresan el mismo comportamiento con otras
+      herramientas.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 2 de 5</span>
+    <p class="sc-question">Según esta página, ¿por qué C++ no usa un corredor de Gherkin literal para expresar el mismo escenario?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Porque GoogleTest no permite escribir nombres de test descriptivos</button>
+      <button class="sc-option" data-correct="true">Porque el ecosistema de C++ no tiene un corredor de Gherkin maduro y ampliamente adoptado; se prefiere una práctica equivalente y bien soportada</button>
+      <button class="sc-option" data-correct="false">Porque C++ no soporta pruebas basadas en comportamiento de ningún tipo</button>
+      <button class="sc-option" data-correct="false">Porque Gherkin solo funciona con lenguajes interpretados</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: forzar una herramienta poco mantenida "solo por consistencia" entre stacks añade fragilidad
+      sin beneficio real — la elección correcta es la práctica equivalente y bien soportada en cada
+      ecosistema, no la sintaxis idéntica a toda costa.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 3 de 5</span>
+    <p class="sc-question">En el test de Flutter/Dart mostrado, ¿qué nivel del sistema se está probando, a diferencia de la versión en Python?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Exactamente el mismo nivel: la función de lógica de negocio pura, sin UI</button>
+      <button class="sc-option" data-correct="true">La UI completa — el test simula que el usuario escribe el cupón y presiona el botón, como en el uso real</button>
+      <button class="sc-option" data-correct="false">Solo la base de datos, sin tocar la interfaz</button>
+      <button class="sc-option" data-correct="false">El rendimiento de la red, no la lógica del cupón</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: <code>integration_test</code> con <code>WidgetTester</code> ejercita la app completa a
+      través de su interfaz, a diferencia de Behave, que llama directamente a la lógica de negocio en
+      Python.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 4 de 5</span>
+    <p class="sc-question">¿Qué verifica específicamente un golden test en Flutter que un test de lógica pura no verifica?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Que el cálculo del descuento sea numéricamente correcto</button>
+      <button class="sc-option" data-correct="true">Que el widget se vea visualmente igual a una imagen de referencia guardada en el repo</button>
+      <button class="sc-option" data-correct="false">Que la app no tenga fugas de memoria</button>
+      <button class="sc-option" data-correct="false">Que el código cumpla con las reglas del linter</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: un golden test compara el render actual del widget contra una captura de referencia
+      ("golden file"), detectando regresiones visuales que un test de lógica no puede ver.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 5 de 5</span>
+    <p class="sc-question">Según la comparación final de esta página, ¿cuál es la lección principal de mostrar el mismo feature implementado con tres herramientas distintas?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Que Gherkin literal debe forzarse en los tres stacks sin excepción</button>
+      <button class="sc-option" data-correct="true">Que el mismo comportamiento de negocio puede especificarse de forma ejecutable con la herramienta que mejor encaja en cada ecosistema, sin perder precisión</button>
+      <button class="sc-option" data-correct="false">Que solo Python es apto para BDD</button>
+      <button class="sc-option" data-correct="false">Que C++ y Flutter no pueden hacer pruebas basadas en comportamiento</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: BDD es una forma de pensar y especificar comportamiento, no una sintaxis obligatoria — la
+      herramienta correcta es la que encaja mejor en cada ecosistema sin sacrificar cobertura ni claridad.
+    </div>
+  </div>
+</section>

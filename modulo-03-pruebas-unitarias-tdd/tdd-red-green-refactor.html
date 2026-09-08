@@ -1,0 +1,225 @@
+---
+layout: lab
+title: "Pruebas Unitarias y TDD: Red-Green-Refactor"
+subtitle: "Un test unitario no es \"trabajo extra\" — es la forma más barata de detectar un bug que existe en este curso."
+eyebrow: "Módulo 3 · Pruebas Unitarias y TDD"
+module: 3
+module_title: "Pruebas Unitarias y TDD"
+prev_url: "/modulo-02-git-github-flujo/conventional-commits-conflictos.html"
+prev_title: "Conventional Commits y resolución de conflictos"
+next_url: "/modulo-03-pruebas-unitarias-tdd/kata-tdd-tres-stacks.html"
+next_title: "Kata TDD en los tres stacks"
+---
+
+<nav class="demo-toc">
+  <a href="#costo-sin-tests">El bug que un test hubiera atrapado</a>
+  <a href="#que-es-unitario">¿Qué hace que un test sea "unitario"?</a>
+  <a href="#first">Principios FIRST</a>
+  <a href="#ciclo-tdd">El ciclo Red-Green-Refactor</a>
+  <a href="#dobles-prueba">Dobles de prueba: dummy, stub, fake, mock, spy</a>
+  <a href="#autoevaluacion">Autoevaluación</a>
+</nav>
+
+<section class="demo-section" id="costo-sin-tests">
+  <span class="section-kicker">// el problema, otra vez</span>
+  <h2>El bug que un test unitario hubiera atrapado en dos minutos</h2>
+  <p>
+    En el <strong>Módulo 1</strong> viste la tabla de costo de un defecto según en qué etapa se detecta:
+    1× en diseño, hasta 1000× en producción. Este módulo es donde esa tabla deja de ser teoría. Un ejemplo
+    real y aburrido — de los que sí pasan: una función que calcula el vuelto de una compra usa
+    <code>float</code> en vez de un tipo decimal exacto. Con montos "normales" funciona. Con
+    <code>0.10 + 0.20</code>, el resultado no es <code>0.30</code> por cómo se representan los flotantes en
+    binario, y un caso de cada varios miles se redondea mal.
+  </p>
+  <div class="callout warn">
+    <strong>Sin test unitario:</strong> nadie lo nota hasta que un cliente reporta un centavo de diferencia
+    en su recibo, soporte investiga tres días, y el fix termina siendo una línea de código.
+    <strong>Con un test unitario</strong> que verifica <code>calcular_vuelto(1.00, 0.70) == 0.30</code>, el
+    error aparece en rojo apenas se escribe la función — antes de hacer commit, antes de abrir un PR, antes
+    de que exista un solo usuario real.
+  </div>
+  <p>
+    Ese es el argumento completo de este módulo: los tests unitarios no prueban que "el código es bueno" en
+    abstracto — prueban una afirmación concreta y barata de verificar, muchas veces por segundo, para
+    siempre.
+  </p>
+</section>
+
+<section class="demo-section" id="que-es-unitario">
+  <span class="section-kicker">// vocabulario</span>
+  <h2>¿Qué hace que un test sea "unitario"?</h2>
+  <p>
+    Un <strong>test unitario</strong> verifica la unidad de comportamiento más pequeña que tiene sentido
+    probar por separado — normalmente una función o un método — de forma <strong>aislada</strong> del resto
+    del sistema: sin base de datos real, sin red, sin sistema de archivos, sin reloj del sistema.
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Característica</th><th>Test unitario</th><th>Lo que NO es</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Alcance</strong></td><td>Una función/método, en aislamiento.</td><td>Varios módulos colaborando (eso es integración — Módulo 4).</td></tr>
+        <tr><td><strong>Dependencias externas</strong></td><td>Ninguna real: se reemplazan con dobles de prueba.</td><td>Una base de datos real, una API externa real.</td></tr>
+        <tr><td><strong>Velocidad</strong></td><td>Milisegundos. Una suite de miles corre en segundos.</td><td>Segundos por test (señal de que no es realmente "unitario").</td></tr>
+        <tr><td><strong>Determinismo</strong></td><td>Mismo resultado siempre, sin importar cuándo o dónde corre.</td><td>Depende de la hora del día, del orden de otros tests, o de la red.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="demo-section" id="first">
+  <span class="section-kicker">// checklist mental</span>
+  <h2>Principios FIRST de un buen test unitario</h2>
+  <p>Un acrónimo simple para evaluar si un test que acabas de escribir es realmente útil:</p>
+  <ul style="margin: 0 0 1rem 1.25rem; color: var(--muted); line-height: 1.9;">
+    <li><strong style="color:var(--text)">Fast (rápido).</strong> Si tu suite tarda minutos, dejarás de correrla seguido — y un test que no se corre no protege nada.</li>
+    <li><strong style="color:var(--text)">Independent (independiente).</strong> El resultado de un test no debe depender de que otro test haya corrido antes.</li>
+    <li><strong style="color:var(--text)">Repeatable (repetible).</strong> Mismo resultado en tu máquina, en la de tu compañero, y en el CI del Módulo 5.</li>
+    <li><strong style="color:var(--text)">Self-validating (auto-validante).</strong> El test dice <em>pasó</em> o <em>falló</em> solo — nadie lee un log a mano para decidir.</li>
+    <li><strong style="color:var(--text)">Timely (oportuno).</strong> Se escribe junto con el código, no "después, si sobra tiempo" — que casi nunca sobra.</li>
+  </ul>
+  <div class="callout">
+    <strong>La T de Timely es la que TDD fuerza por diseño:</strong> si escribes el test antes que el
+    código, es matemáticamente imposible dejarlo para después.
+  </div>
+</section>
+
+<section class="demo-section" id="ciclo-tdd">
+  <span class="section-kicker">// la práctica central de este módulo</span>
+  <h2>El ciclo Red-Green-Refactor</h2>
+  <p>
+    <strong>Test-Driven Development</strong> (Kent Beck) invierte el orden habitual: en vez de escribir
+    código y luego (quizás) un test, escribes primero un test que falla, y dejas que ese test te guíe hacia
+    la implementación mínima que lo hace pasar.
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Paso</th><th>Qué haces</th><th>Por qué importa</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong style="color:var(--warn)">🔴 Red</strong></td><td>Escribes un test para una funcionalidad que <em>todavía no existe</em>. Lo corres y confirmas que falla.</td><td>Si no lo ves fallar primero, no sabes si el test realmente prueba algo — un test que siempre pasa no protege nada.</td></tr>
+        <tr><td><strong style="color:var(--accent2)">🟢 Green</strong></td><td>Escribes el código <em>mínimo</em> que hace pasar ese test. Feo está bien, rápido es la prioridad.</td><td>Evita sobre-diseñar código para requisitos que todavía no están confirmados por un test.</td></tr>
+        <tr><td><strong>🔵 Refactor</strong></td><td>Con el test en verde como red de seguridad, mejoras el diseño del código sin cambiar su comportamiento.</td><td>Es el único momento seguro para limpiar: si rompes algo, el test se pone rojo de inmediato.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout accent2">
+    <strong>El ciclo se repite en minutos, no en horas.</strong> Cada vuelta agrega una sola afirmación
+    nueva sobre el comportamiento del sistema. Al final de una kata de 30 minutos tienes tanto la
+    implementación como su documentación ejecutable — los tests.
+  </div>
+</section>
+
+<section class="demo-section" id="dobles-prueba">
+  <span class="section-kicker">// aislar la unidad</span>
+  <h2>Dobles de prueba: dummy, stub, fake, mock, spy</h2>
+  <p>
+    Para probar una unidad en aislamiento, sus dependencias (una base de datos, un servicio de pagos, el
+    reloj del sistema) se reemplazan por <strong>dobles de prueba</strong>. No todos son lo mismo:
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Doble</th><th>Qué hace</th><th>Ejemplo</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Dummy</strong></td><td>Se pasa porque el código lo exige, nunca se usa realmente.</td><td>Un objeto de configuración vacío pasado a un constructor.</td></tr>
+        <tr><td><strong>Stub</strong></td><td>Devuelve respuestas predefinidas, sin lógica.</td><td><code>obtener_tasa_cambio()</code> siempre devuelve <code>3.75</code> en el test.</td></tr>
+        <tr><td><strong>Fake</strong></td><td>Tiene una implementación real pero simplificada.</td><td>Un repositorio en memoria en vez de una base de datos real.</td></tr>
+        <tr><td><strong>Mock</strong></td><td>Verifica que se le llamó de cierta forma (aserciones sobre interacción).</td><td>Confirmar que <code>enviar_email()</code> se llamó exactamente una vez con el correo correcto.</td></tr>
+        <tr><td><strong>Spy</strong></td><td>Como un fake, pero además registra cómo se le llamó, para inspeccionarlo después.</td><td>Un logger falso que guarda todos los mensajes recibidos para verificarlos al final.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    En la práctica, la mayoría de librerías (<code>unittest.mock</code> en Python, GoogleMock en C++,
+    <code>mocktail</code>/<code>mockito</code> en Dart) usan la palabra "mock" para todos estos casos — la
+    distinción de vocabulario importa para pensar con claridad, no para elegir el nombre de la clase.
+  </p>
+</section>
+
+<section class="demo-section" id="autoevaluacion">
+  <span class="section-kicker">// autoevaluación</span>
+  <h2>Autoevaluación</h2>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 1 de 5</span>
+    <p class="sc-question">
+      Según el ejemplo de esta página, ¿en qué momento del ciclo de vida es más barato haber atrapado el
+      bug de redondeo con <code>float</code>?
+    </p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Cuando un cliente lo reporta en producción</button>
+      <button class="sc-option" data-correct="true">Al escribir el test unitario, antes de hacer commit</button>
+      <button class="sc-option" data-correct="false">Durante el code review del PR</button>
+      <button class="sc-option" data-correct="false">Durante el pipeline de CI del Módulo 5</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: mientras más temprano en el ciclo de vida (Módulo 1) se detecta el defecto, más barato es
+      corregirlo. Un test unitario lo atrapa en el momento más temprano posible — antes de que exista un
+      commit siquiera.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 2 de 5</span>
+    <p class="sc-question">Un test tarda 4 segundos porque se conecta a una base de datos real. Según lo visto en esta página, ¿qué característica de un test unitario está violando?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Self-validating</button>
+      <button class="sc-option" data-correct="false">Timely</button>
+      <button class="sc-option" data-correct="true">Fast e independencia de dependencias externas (aislamiento)</button>
+      <button class="sc-option" data-correct="false">Repeatable únicamente</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: un test unitario real no toca dependencias externas reales como una base de datos — eso lo
+      vuelve lento y ya no es realmente "unitario", sino una prueba de integración (Módulo 4).
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 3 de 5</span>
+    <p class="sc-question">En el ciclo Red-Green-Refactor, ¿por qué es importante ver el test fallar (Red) antes de escribir la implementación?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Es solo una convención estética sin efecto práctico</button>
+      <button class="sc-option" data-correct="true">Confirma que el test realmente prueba algo — un test que nunca falla no protege nada</button>
+      <button class="sc-option" data-correct="false">Porque los frameworks de testing lo exigen técnicamente</button>
+      <button class="sc-option" data-correct="false">Para medir cuánto tiempo tarda en ejecutarse</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: si nunca ves el test fallar, no puedes distinguir "el test pasa porque el código es
+      correcto" de "el test pasa siempre, sin importar qué haga el código" — un falso positivo silencioso.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 4 de 5</span>
+    <p class="sc-question">Un test reemplaza el servicio de envío de emails con un objeto falso que registra que <code>enviar()</code> fue llamado exactamente una vez con el destinatario correcto. ¿Qué tipo de doble de prueba es principalmente?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Dummy</button>
+      <button class="sc-option" data-correct="false">Stub</button>
+      <button class="sc-option" data-correct="true">Mock</button>
+      <button class="sc-option" data-correct="false">Fake</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: verificar <em>cómo</em> se le llamó (aserciones sobre la interacción) es la característica
+      distintiva de un mock, a diferencia de un stub que solo devuelve datos predefinidos.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 5 de 5</span>
+    <p class="sc-question">Durante el paso "Refactor" del ciclo TDD, ¿qué te da la confianza para mejorar el diseño del código sin miedo a romperlo?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">La revisión de un compañero en el PR</button>
+      <button class="sc-option" data-correct="true">Que el test ya está en verde y actúa como red de seguridad</button>
+      <button class="sc-option" data-correct="false">El linter configurado en el Módulo 6</button>
+      <button class="sc-option" data-correct="false">La cobertura de código reportada por la herramienta</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: con el test verde, cualquier cambio que rompa el comportamiento existente se detecta de
+      inmediato — eso es lo que hace seguro refactorizar justo en ese momento del ciclo.
+    </div>
+  </div>
+</section>

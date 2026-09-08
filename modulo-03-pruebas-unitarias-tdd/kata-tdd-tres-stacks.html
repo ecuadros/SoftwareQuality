@@ -1,0 +1,305 @@
+---
+layout: lab
+title: "Kata TDD en los Tres Stacks: Python, C++ y Flutter/Dart"
+subtitle: "La misma feature, el mismo ciclo Red-Green-Refactor, tres ecosistemas — para ver qué cambia y qué no."
+eyebrow: "Módulo 3 · Pruebas Unitarias y TDD"
+module: 3
+module_title: "Pruebas Unitarias y TDD"
+prev_url: "/modulo-03-pruebas-unitarias-tdd/tdd-red-green-refactor.html"
+prev_title: "Pruebas unitarias y TDD: Red-Green-Refactor"
+next_url: "/modulo-03-pruebas-unitarias-tdd/cobertura-mocks-laboratorio.html"
+next_title: "Cobertura, mocks y laboratorio"
+---
+
+<nav class="demo-toc">
+  <a href="#la-kata">La kata: validador de contraseñas</a>
+  <a href="#python">Python — pytest</a>
+  <a href="#cpp">C++ — GoogleTest</a>
+  <a href="#flutter">Flutter/Dart — flutter_test</a>
+  <a href="#comparacion">Lo que cambia y lo que no cambia</a>
+  <a href="#autoevaluacion">Autoevaluación</a>
+</nav>
+
+<section class="demo-section" id="la-kata">
+  <span class="section-kicker">// el ejercicio</span>
+  <h2>La kata: un validador de contraseñas</h2>
+  <p>
+    Vas a implementar la misma regla de negocio en Python, C++ y Flutter/Dart, siguiendo Red-Green-Refactor
+    en cada uno. La regla, deliberadamente simple para que el foco esté en el <em>proceso</em>, no en el
+    problema:
+  </p>
+  <div class="callout">
+    Una contraseña es válida si tiene <strong>al menos 8 caracteres</strong>, <strong>al menos un
+    dígito</strong> y <strong>al menos una letra mayúscula</strong>.
+  </div>
+  <p>
+    Debajo se muestra el ciclo completo en Python (para ver las tres vueltas: Red, Green, Refactor), y
+    luego el resultado equivalente — test + implementación final — en C++ y Flutter/Dart. El proceso para
+    llegar ahí es idéntico en los tres: se muestra completo una vez para no repetir lo mismo tres veces.
+  </p>
+</section>
+
+<section class="demo-section" id="python">
+  <span class="section-kicker">// stack 1 de 3</span>
+  <h2>Python — pytest</h2>
+
+  <p><strong>🔴 Red:</strong> se escribe el primer test, para la regla más simple (longitud), y se corre para verlo fallar.</p>
+  <div class="code-block">
+    <div class="code-block-label">test_validador.py</div>
+    <pre><span class="cm"># todavía no existe validador.py — este test debe fallar con ImportError</span>
+from validador import es_valida
+
+def test_rechaza_menor_a_8_caracteres():
+    assert es_valida("Abc123") is False</pre>
+  </div>
+  <div class="code-block">
+    <div class="code-block-label">bash</div>
+    <pre>$ pytest -v
+<span class="cm"># ImportError: no module named 'validador' → Red confirmado</span></pre>
+  </div>
+
+  <p><strong>🟢 Green:</strong> la implementación mínima que hace pasar ese test — nada más.</p>
+  <div class="code-block">
+    <div class="code-block-label">validador.py</div>
+    <pre>def es_valida(password):
+    return len(password) >= 8</pre>
+  </div>
+
+  <p>Se agregan las siguientes reglas, una por una, repitiendo Red-Green en cada vuelta:</p>
+  <div class="code-block">
+    <div class="code-block-label">test_validador.py — reglas agregadas</div>
+    <pre>def test_rechaza_sin_digito():
+    assert es_valida("Abcdefgh") is False
+
+def test_rechaza_sin_mayuscula():
+    assert es_valida("abc12345") is False
+
+def test_acepta_password_valida():
+    assert es_valida("Abcd1234") is True</pre>
+  </div>
+
+  <p><strong>🔵 Refactor:</strong> con las cuatro reglas en verde, se limpia la implementación usando expresiones regulares en vez de bucles manuales — el comportamiento no cambia, el diseño sí.</p>
+  <div class="code-block">
+    <div class="code-block-label">validador.py — final</div>
+    <pre>import re
+
+def es_valida(password: str) -> bool:
+    if len(password) < 8:
+        return False
+    return bool(re.search(r"\d", password)) and bool(re.search(r"[A-Z]", password))</pre>
+  </div>
+  <div class="code-block">
+    <div class="code-block-label">bash</div>
+    <pre>$ pytest -v
+<span class="cm"># 4 passed — el refactor no rompió ninguna regla ya cubierta</span></pre>
+  </div>
+</section>
+
+<section class="demo-section" id="cpp">
+  <span class="section-kicker">// stack 2 de 3</span>
+  <h2>C++ — GoogleTest</h2>
+  <p>
+    El ciclo es el mismo: se empieza por un test que falla al compilar (ni siquiera existe la función),
+    luego la implementación mínima, y se agregan reglas una por una. Aquí se muestra el resultado tras
+    completar las cuatro vueltas:
+  </p>
+  <div class="code-block">
+    <div class="code-block-label">test_validador.cpp</div>
+    <pre><span class="cm">#include &lt;gtest/gtest.h&gt;</span>
+#include "validador.h"
+
+TEST(ValidadorPassword, RechazaMenorA8Caracteres) {
+    EXPECT_FALSE(es_valida("Abc123"));
+}
+
+TEST(ValidadorPassword, RechazaSinDigito) {
+    EXPECT_FALSE(es_valida("Abcdefgh"));
+}
+
+TEST(ValidadorPassword, RechazaSinMayuscula) {
+    EXPECT_FALSE(es_valida("abc12345"));
+}
+
+TEST(ValidadorPassword, AceptaPasswordValida) {
+    EXPECT_TRUE(es_valida("Abcd1234"));
+}</pre>
+  </div>
+  <div class="code-block">
+    <div class="code-block-label">validador.cpp — final (tras refactor)</div>
+    <pre><span class="cm">#include "validador.h"</span>
+#include &lt;regex&gt;
+
+bool es_valida(const std::string&amp; password) {
+    if (password.length() &lt; 8) return false;
+    return std::regex_search(password, std::regex("\\d")) &amp;&amp;
+           std::regex_search(password, std::regex("[A-Z]"));
+}</pre>
+  </div>
+  <div class="code-block">
+    <div class="code-block-label">bash — CMake + CTest</div>
+    <pre>$ cmake -B build &amp;&amp; cmake --build build
+$ ctest --test-dir build --output-on-failure
+<span class="cm"># 4/4 tests pasando</span></pre>
+  </div>
+  <div class="callout warn">
+    <strong>Lo que solo ves en C++:</strong> el "Red" inicial aquí es un <em>error de compilación</em>
+    (<code>validador.h</code> no existe todavía), no solo una aserción fallida. Eso agrega un paso extra a
+    cada vuelta del ciclo — declarar la firma en el header antes de poder ver el test correr — y es una de
+    las razones por las que TDD "se siente" más lento en C++ que en Python.
+  </div>
+</section>
+
+<section class="demo-section" id="flutter">
+  <span class="section-kicker">// stack 3 de 3</span>
+  <h2>Flutter/Dart — flutter_test</h2>
+  <p>
+    Igual proceso: cuatro vueltas de Red-Green, mismas reglas, ahora en Dart puro (esta lógica no depende
+    de ningún widget, así que ni siquiera hace falta <code>WidgetTester</code> — es un test unitario normal
+    dentro de un proyecto Flutter).
+  </p>
+  <div class="code-block">
+    <div class="code-block-label">test/validador_test.dart</div>
+    <pre><span class="cm">import 'package:flutter_test/flutter_test.dart';</span>
+import 'package:mi_app/validador.dart';
+
+void main() {
+  test('rechaza contraseñas menores a 8 caracteres', () {
+    expect(esValida('Abc123'), isFalse);
+  });
+
+  test('rechaza contraseñas sin dígito', () {
+    expect(esValida('Abcdefgh'), isFalse);
+  });
+
+  test('rechaza contraseñas sin mayúscula', () {
+    expect(esValida('abc12345'), isFalse);
+  });
+
+  test('acepta una contraseña válida', () {
+    expect(esValida('Abcd1234'), isTrue);
+  });
+}</pre>
+  </div>
+  <div class="code-block">
+    <div class="code-block-label">lib/validador.dart — final (tras refactor)</div>
+    <pre>bool esValida(String password) {
+  if (password.length &lt; 8) return false;
+  final tieneDigito = RegExp(r'\d').hasMatch(password);
+  final tieneMayuscula = RegExp(r'[A-Z]').hasMatch(password);
+  return tieneDigito &amp;&amp; tieneMayuscula;
+}</pre>
+  </div>
+  <div class="code-block">
+    <div class="code-block-label">bash</div>
+    <pre>$ flutter test
+<span class="cm"># 00:01 +4: All tests passed!</span></pre>
+  </div>
+</section>
+
+<section class="demo-section" id="comparacion">
+  <span class="section-kicker">// el punto de hacerlo tres veces</span>
+  <h2>Lo que cambia y lo que no cambia entre stacks</h2>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th></th><th>Python (pytest)</th><th>C++ (GoogleTest)</th><th>Flutter/Dart (flutter_test)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>El ciclo Red-Green-Refactor</strong></td><td colspan="3" style="text-align:center;">Idéntico en los tres — esa es la parte que no cambia nunca.</td></tr>
+        <tr><td><strong>Qué significa "Red"</strong></td><td>Aserción fallida o <code>ImportError</code></td><td><strong>Puede ser error de compilación</strong>, no solo aserción</td><td>Aserción fallida (interpretado, sin paso de compilación)</td></tr>
+        <tr><td><strong>Velocidad del ciclo</strong></td><td>Muy rápida (interpretado)</td><td>Más lenta — cada vuelta puede requerir recompilar</td><td>Rápida con hot reload en desarrollo</td></tr>
+        <tr><td><strong>Riesgo dominante</strong></td><td>Tipado dinámico: un error de tipo solo aparece en tiempo de ejecución</td><td>Gestión manual de memoria y punteros — un test puede pasar y aun así haber undefined behavior (Módulo 7)</td><td>Acoplar la lógica de negocio a un widget en vez de aislarla (dificulta el test unitario)</td></tr>
+        <tr><td><strong>Corredor de tests</strong></td><td><code>pytest</code></td><td><code>ctest</code> (vía CMake)</td><td><code>flutter test</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    El objetivo de repetir la kata tres veces no es memorizar sintaxis — es notar que el <strong>proceso de
+    diseño guiado por tests</strong> es transferible entre lenguajes, mientras que los riesgos específicos
+    de cada ecosistema (tipado dinámico, memoria manual, acoplamiento a UI) requieren atención distinta en
+    cada uno.
+  </p>
+</section>
+
+<section class="demo-section" id="autoevaluacion">
+  <span class="section-kicker">// autoevaluación</span>
+  <h2>Autoevaluación</h2>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 1 de 5</span>
+    <p class="sc-question">En la kata de esta página, ¿cuál fue la primera regla que se implementó, y por qué se empezó por ahí?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="true">La longitud mínima, porque era la regla más simple para arrancar el ciclo con la vuelta más corta posible</button>
+      <button class="sc-option" data-correct="false">La regla de mayúsculas, porque es la más importante para la seguridad</button>
+      <button class="sc-option" data-correct="false">Todas las reglas a la vez, en un solo test grande</button>
+      <button class="sc-option" data-correct="false">La regla del dígito, porque así lo pide pytest por convención</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: TDD avanza en pasos pequeños. Empezar por la regla más simple permite completar una vuelta
+      completa de Red-Green-Refactor rápido, en vez de intentar resolver las cuatro reglas de una sola vez.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 2 de 5</span>
+    <p class="sc-question">Según la tabla de comparación, ¿qué hace que el paso "Red" en C++ sea distinto al de Python y Flutter/Dart?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">En C++ no existe el concepto de test que falle</button>
+      <button class="sc-option" data-correct="true">En C++, "Red" puede ser un error de compilación, no solo una aserción fallida</button>
+      <button class="sc-option" data-correct="false">GoogleTest no permite escribir tests antes que la implementación</button>
+      <button class="sc-option" data-correct="false">En C++ los tests corren automáticamente sin comando explícito</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: como <code>validador.h</code> no existe aún, el primer intento de compilar el test falla
+      directamente — un paso adicional frente a Python o Dart, que son interpretados y solo fallarían en la
+      aserción o el import.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 3 de 5</span>
+    <p class="sc-question">¿Qué cambió exactamente durante el paso "Refactor" en la versión de Python de la kata?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Se agregó una nueva regla de validación que antes no existía</button>
+      <button class="sc-option" data-correct="true">La implementación pasó de comprobar reglas por separado a usar expresiones regulares, sin cambiar el comportamiento observable</button>
+      <button class="sc-option" data-correct="false">Se eliminaron los tests que ya no eran necesarios</button>
+      <button class="sc-option" data-correct="false">Se cambió el framework de testing de pytest a otro</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: refactorizar significa mejorar el diseño interno sin alterar el comportamiento externo. Los
+      cuatro tests existentes siguieron pasando exactamente igual después del cambio.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 4 de 5</span>
+    <p class="sc-question">¿Por qué el test de Flutter/Dart de esta página no necesitó usar <code>WidgetTester</code> ni montar ningún widget?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Porque Flutter no soporta pruebas de widgets</button>
+      <button class="sc-option" data-correct="true">Porque <code>esValida</code> es lógica de negocio pura, sin dependencia de la interfaz gráfica — un test unitario normal</button>
+      <button class="sc-option" data-correct="false">Porque <code>flutter_test</code> no incluye esa herramienta</button>
+      <button class="sc-option" data-correct="false">Porque los tests unitarios en Dart requieren un emulador</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: al mantener la lógica de validación separada de la UI, se puede probar como una función
+      Dart pura y rápida — sin necesidad de infraestructura de widgets, que sí se usa para pruebas de UI
+      (Módulo 4).
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 5 de 5</span>
+    <p class="sc-question">Según la tabla de comparación, ¿cuál es el riesgo dominante mencionado específicamente para el stack de C++ que no aparece igual en Python ni Flutter/Dart?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">El tipado dinámico</button>
+      <button class="sc-option" data-correct="true">Gestión manual de memoria y punteros, con posible undefined behavior aunque los tests pasen</button>
+      <button class="sc-option" data-correct="false">El acoplamiento de la lógica a un widget de interfaz</button>
+      <button class="sc-option" data-correct="false">La falta de un corredor de tests</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: un test en verde en C++ no garantiza ausencia de undefined behavior (memoria mal manejada,
+      punteros colgantes) — ese riesgo se ataca con sanitizers y Valgrind en el Módulo 7, no con tests
+      unitarios solos.
+    </div>
+  </div>
+</section>

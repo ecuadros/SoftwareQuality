@@ -1,0 +1,201 @@
+---
+layout: lab
+title: "Pruebas de Integración y Contract Testing"
+subtitle: "Todos los tests unitarios en verde no significa que el sistema funcione — solo que cada pieza funciona sola."
+eyebrow: "Módulo 4 · Pruebas de Integración, E2E y BDD"
+module: 4
+module_title: "Pruebas de Integración, E2E y BDD"
+prev_url: "/modulo-03-pruebas-unitarias-tdd/cobertura-mocks-laboratorio.html"
+prev_title: "Cobertura, mocks y laboratorio"
+next_url: "/modulo-04-integracion-e2e-bdd/bdd-gherkin-tres-stacks.html"
+next_title: "BDD con Gherkin en los tres stacks"
+---
+
+<nav class="demo-toc">
+  <a href="#costo-integracion">El bug que ningún test unitario atrapa</a>
+  <a href="#piramide">La pirámide de pruebas</a>
+  <a href="#que-prueba-integracion">Qué prueba realmente una prueba de integración</a>
+  <a href="#contract-testing">Contract testing</a>
+  <a href="#autoevaluacion">Autoevaluación</a>
+</nav>
+
+<section class="demo-section" id="costo-integracion">
+  <span class="section-kicker">// el problema</span>
+  <h2>El bug que ningún test unitario atrapa</h2>
+  <p>
+    Imagina dos equipos: uno construye el servicio de <strong>pagos</strong>, otro construye el
+    <strong>carrito de compras</strong> que lo consume. Cada equipo mockea al otro en sus tests unitarios
+    (Módulo 3) — es lo correcto, así deben ser los tests unitarios. El servicio de pagos cambia el campo
+    <code>monto</code> de centavos (entero) a dólares (decimal) en una nueva versión, actualiza sus propios
+    tests unitarios, y los deja en verde. El carrito sigue mockeando la respuesta <em>vieja</em>, así que
+    sus tests unitarios también siguen en verde.
+  </p>
+  <div class="callout warn">
+    <strong>Los dos equipos tienen 100% de tests unitarios pasando</strong> — y el sistema integrado está
+    completamente roto: el carrito le está cobrando a un cliente 100 veces menos de lo que debería. Ningún
+    test unitario, por diseño, iba a atrapar esto: ambos mockearon exactamente la parte que cambió.
+  </div>
+  <p>
+    Esto no es un fallo de los tests unitarios — es exactamente lo que se supone que hagan (aislar). El
+    problema es depender <em>solo</em> de ellos. Este módulo cubre las capas de prueba que sí atrapan este
+    tipo de falla: integración, contract testing, BDD y E2E.
+  </p>
+</section>
+
+<section class="demo-section" id="piramide">
+  <span class="section-kicker">// cuánto de cada capa</span>
+  <h2>La pirámide de pruebas</h2>
+  <p>
+    No todas las capas de prueba deben tener la misma cantidad de tests. La pirámide de pruebas (Mike
+    Cohn) es una guía de proporción: muchos tests rápidos y baratos en la base, pocos tests lentos y caros
+    en la punta.
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Capa</th><th>Cantidad relativa</th><th>Velocidad</th><th>Qué verifica</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>E2E</strong> (Módulo 4)</td><td>Pocos (decenas)</td><td>Lenta (segundos a minutos por test)</td><td>El sistema completo, como lo usa un usuario real, de punta a punta.</td></tr>
+        <tr><td><strong>Integración</strong> (esta página)</td><td>Moderada (cientos)</td><td>Media</td><td>Que dos o más componentes reales colaboran correctamente entre sí.</td></tr>
+        <tr><td><strong>Unitarias</strong> (Módulo 3)</td><td>Muchas (miles)</td><td>Muy rápida (milisegundos)</td><td>Una unidad de lógica, aislada de todo lo demás.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <strong>El error inverso también existe:</strong> un equipo que solo confía en E2E porque "prueba todo
+    de verdad" termina con una suite lentísima y frágil (un test E2E falla por timing, por datos de prueba
+    compartidos, por cambios de UI ajenos a la lógica) que tarda tanto en correr que deja de ejecutarse en
+    cada cambio — perdiendo justo la propiedad de "Timely" del Módulo 3.
+  </div>
+</section>
+
+<section class="demo-section" id="que-prueba-integracion">
+  <span class="section-kicker">// la capa del medio</span>
+  <h2>Qué prueba realmente una prueba de integración</h2>
+  <p>
+    Una prueba de integración verifica que <strong>dos o más componentes reales</strong> — no mockeados —
+    colaboran correctamente: tu código de acceso a datos contra una base de datos real (o un contenedor
+    efímero de la misma), tu cliente HTTP contra una API real, dos módulos internos de tu propio sistema
+    trabajando juntos sin dobles de prueba de por medio.
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th></th><th>Test unitario</th><th>Test de integración</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Base de datos</strong></td><td>Mockeada o en memoria (fake)</td><td>Real (o contenedor Docker efímero con datos de prueba)</td></tr>
+        <tr><td><strong>Pregunta que responde</strong></td><td>¿Esta función calcula bien, dado un input?</td><td>¿Esta función realmente guarda y recupera bien de la base de datos real?</td></tr>
+        <tr><td><strong>Falla típica que atrapa</strong></td><td>Lógica de negocio incorrecta.</td><td>Query SQL mal escrita, tipo de dato incompatible, configuración de conexión rota.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="demo-section" id="contract-testing">
+  <span class="section-kicker">// para sistemas con varios servicios</span>
+  <h2>Contract testing: el problema del ejemplo inicial, resuelto</h2>
+  <p>
+    El <strong>contract testing</strong> ataca exactamente el escenario de pagos vs. carrito de la
+    introducción: en vez de que cada equipo mockee al otro "a mano" (con el riesgo de que el mock quede
+    desactualizado), ambos equipos comparten un <strong>contrato</strong> explícito — un archivo que
+    describe la forma exacta de la request/response esperada.
+  </p>
+  <ul style="margin: 0 0 1rem 1.25rem; color: var(--muted); line-height: 1.9;">
+    <li>El equipo <strong>consumidor</strong> (carrito) genera el contrato a partir de lo que su código realmente espera recibir.</li>
+    <li>El equipo <strong>proveedor</strong> (pagos) corre ese mismo contrato contra su implementación real en su propio CI.</li>
+    <li>Si el proveedor cambia el formato de <code>monto</code> sin actualizar el contrato, <strong>su propio pipeline de CI falla</strong> — antes de publicar la nueva versión, no después de que el carrito la consuma en producción.</li>
+  </ul>
+  <div class="callout accent2">
+    Herramientas como <a href="https://pact.io/" target="_blank" rel="noopener">Pact</a> automatizan este
+    intercambio de contratos entre servicios. Para el proyecto de este curso, con un equipo pequeño, la
+    versión práctica y suficiente es: mantener un archivo de esquema compartido (JSON Schema u OpenAPI) que
+    ambos lados validan en su propio CI — la disciplina importa más que la herramienta específica.
+  </div>
+</section>
+
+<section class="demo-section" id="autoevaluacion">
+  <span class="section-kicker">// autoevaluación</span>
+  <h2>Autoevaluación</h2>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 1 de 5</span>
+    <p class="sc-question">
+      En el ejemplo de pagos y carrito, ambos equipos tenían 100% de tests unitarios en verde y el sistema
+      integrado seguía roto. ¿Por qué los tests unitarios no atraparon el problema?
+    </p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Porque los tests unitarios estaban mal escritos</button>
+      <button class="sc-option" data-correct="true">Porque, por diseño, cada equipo mockeaba al otro servicio — exactamente la parte que cambió quedó fuera del alcance del test unitario</button>
+      <button class="sc-option" data-correct="false">Porque ninguno de los dos equipos tenía cobertura suficiente</button>
+      <button class="sc-option" data-correct="false">Porque los tests unitarios no existen en arquitecturas de microservicios</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: aislar dependencias con mocks es correcto para tests unitarios (Módulo 3), pero implica que
+      un cambio de contrato entre dos servicios reales nunca se detecta ahí — para eso existen la
+      integración y el contract testing.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 2 de 5</span>
+    <p class="sc-question">Según la pirámide de pruebas de Mike Cohn, ¿cómo debería distribuirse la cantidad de tests entre capas?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">La misma cantidad exacta en cada capa</button>
+      <button class="sc-option" data-correct="true">Muchos tests unitarios en la base, moderados de integración, pocos E2E en la punta</button>
+      <button class="sc-option" data-correct="false">Mayoría de tests E2E, porque prueban el sistema completo</button>
+      <button class="sc-option" data-correct="false">Solo tests de integración, eliminando unitarios y E2E</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: la forma de pirámide refleja que los tests rápidos y baratos (unitarios) deben ser mayoría,
+      mientras que los lentos y frágiles (E2E) deben usarse con moderación, solo para lo más crítico.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 3 de 5</span>
+    <p class="sc-question">Un equipo confía casi exclusivamente en tests E2E porque "prueban todo de verdad". Según lo visto en esta página, ¿qué problema práctico genera esto?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Ningún problema, es la estrategia más segura posible</button>
+      <button class="sc-option" data-correct="true">Una suite lenta y frágil que tarda tanto que deja de correrse en cada cambio, perdiendo la propiedad de ser oportuna</button>
+      <button class="sc-option" data-correct="false">Los tests E2E no pueden detectar bugs de lógica de negocio</button>
+      <button class="sc-option" data-correct="false">Elimina la necesidad de tener CI</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: los tests E2E son valiosos pero lentos y sensibles a factores ajenos a la lógica (timing,
+      datos compartidos, UI). Depender solo de ellos rompe el principio "Timely" visto en el Módulo 3.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 4 de 5</span>
+    <p class="sc-question">¿Cuál es la diferencia clave entre un test unitario y un test de integración sobre el mismo código de acceso a datos?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">El test de integración no necesita aserciones</button>
+      <button class="sc-option" data-correct="true">El test de integración usa una base de datos real (o un contenedor efímero), mientras que el unitario la mockea o usa un fake</button>
+      <button class="sc-option" data-correct="false">El test unitario siempre es más lento porque revisa más casos</button>
+      <button class="sc-option" data-correct="false">No hay ninguna diferencia real entre ambos</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: la presencia de una dependencia real (no mockeada) es exactamente lo que distingue a una
+      prueba de integración de una unitaria — y lo que le permite atrapar fallas como un query SQL mal
+      escrito.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 5 de 5</span>
+    <p class="sc-question">En contract testing, ¿qué logra que el equipo proveedor corra el contrato del consumidor en su propio pipeline de CI?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Elimina la necesidad de que el proveedor escriba sus propios tests</button>
+      <button class="sc-option" data-correct="true">Que un cambio de formato incompatible falle en el CI del proveedor, antes de publicarse, en vez de romper al consumidor en producción</button>
+      <button class="sc-option" data-correct="false">Que el consumidor deje de necesitar sus propios tests unitarios</button>
+      <button class="sc-option" data-correct="false">Que ambos servicios se desplieguen automáticamente juntos</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: es la aplicación directa del "shift left" del Módulo 1 — mover la detección del defecto de
+      contrato al momento más temprano posible: el CI del propio proveedor, no producción.
+    </div>
+  </div>
+</section>

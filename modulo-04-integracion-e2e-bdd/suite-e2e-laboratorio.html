@@ -1,0 +1,179 @@
+---
+layout: lab
+title: "Suite E2E, Laboratorio y Checklist de Cierre"
+subtitle: "Un puñado de pruebas E2E bien elegidas vale más que cien que nadie se anima a mantener."
+eyebrow: "Módulo 4 · Pruebas de Integración, E2E y BDD"
+module: 4
+module_title: "Pruebas de Integración, E2E y BDD"
+prev_url: "/modulo-04-integracion-e2e-bdd/bdd-gherkin-tres-stacks.html"
+prev_title: "BDD con Gherkin en los tres stacks"
+---
+
+<nav class="demo-toc">
+  <a href="#que-es-e2e">Qué es (y qué no es) una prueba E2E</a>
+  <a href="#eligiendo-e2e">Cómo elegir cuáles escenarios merecen ser E2E</a>
+  <a href="#laboratorio">Laboratorio: suite de integración + BDD sobre tu repo</a>
+  <a href="#checklist-cierre">Checklist de cierre — Módulo 4</a>
+  <a href="#autoevaluacion">Autoevaluación</a>
+</nav>
+
+<section class="demo-section" id="que-es-e2e">
+  <span class="section-kicker">// la punta de la pirámide</span>
+  <h2>Qué es (y qué no es) una prueba E2E</h2>
+  <p>
+    Una prueba <strong>End-to-End</strong> ejercita el sistema completo tal como lo usaría un usuario real:
+    sin mocks, sin dobles de prueba, contra una instancia real (o casi real) de todo el stack — base de
+    datos, API, y en el caso de Flutter, la app corriendo de verdad en un dispositivo o emulador.
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th></th><th>Integración (Módulo 4, página anterior)</th><th>E2E</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Alcance</strong></td><td>Dos o más componentes específicos.</td><td>El sistema completo, de punta a punta.</td></tr>
+        <tr><td><strong>Ejemplo</strong></td><td>El código de acceso a datos contra la base de datos real.</td><td>Un usuario agrega un producto al carrito, aplica un cupón, y paga.</td></tr>
+        <tr><td><strong>Costo de mantenimiento</strong></td><td>Moderado.</td><td>Alto — cualquier cambio de UI o de flujo puede romperlo.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="demo-section" id="eligiendo-e2e">
+  <span class="section-kicker">// menos es más, aquí</span>
+  <h2>Cómo elegir cuáles escenarios merecen ser E2E</h2>
+  <p>
+    Como viste en la pirámide de pruebas (página anterior de este módulo), la punta debe tener pocos tests.
+    La pregunta correcta no es "¿qué más puedo probar E2E?" sino "¿qué flujo, si se rompe, es tan grave que
+    justifica el costo de mantenimiento de un test E2E?"
+  </p>
+  <div class="callout">
+    <strong>Buenos candidatos a E2E:</strong> los "happy paths" críticos para el negocio (completar una
+    compra, iniciar sesión, guardar el trabajo del usuario) y quizás uno o dos casos de error graves
+    (pago rechazado). <strong>Malos candidatos:</strong> validaciones de campo por campo, casos límite
+    numéricos, combinaciones exhaustivas de inputs — eso ya lo cubren, mucho más barato, los tests
+    unitarios (Módulo 3) e integración.
+  </div>
+</section>
+
+<section class="demo-section" id="laboratorio">
+  <span class="section-kicker">// laboratorio</span>
+  <h2>Laboratorio: suite de integración + BDD sobre tu propio repo</h2>
+  <p>
+    Sobre el mismo proyecto que vienes construyendo desde el Módulo 1, agrega una capa de pruebas de
+    integración y al menos un escenario BDD real, usando la herramienta correspondiente a tu stack elegido.
+  </p>
+
+  <div class="checklist" data-key="laboratorio-integracion-bdd">
+    <div class="checklist-header">
+      <span class="checklist-title">Pasos del laboratorio</span>
+      <span class="checklist-progress"></span>
+    </div>
+    <ul>
+      <li data-item="test-integracion"><input type="checkbox" id="le-1" /><label for="le-1">Escribiste al menos un test de integración real contra una dependencia real (base de datos, API, o dos módulos internos sin mocks).</label></li>
+      <li data-item="feature-gherkin"><input type="checkbox" id="le-2" /><label for="le-2">Escribiste al menos un archivo de escenario (<code>.feature</code> en Python, o su equivalente documentado en C++/Flutter) describiendo un comportamiento real de tu proyecto en formato Given-When-Then.</label></li>
+      <li data-item="steps-implementados"><input type="checkbox" id="le-3" /><label for="le-3">Implementaste los steps/fixtures/widget tests que hacen ejecutable ese escenario.</label></li>
+      <li data-item="un-e2e"><input type="checkbox" id="le-4" /><label for="le-4">Identificaste y automatizaste como máximo 1-2 flujos E2E — los más críticos, no todos los posibles.</label></li>
+      <li data-item="pr-integracion"><input type="checkbox" id="le-5" /><label for="le-5">Abriste el PR correspondiente siguiendo el flujo del Módulo 2, con revisión real.</label></li>
+    </ul>
+  </div>
+</section>
+
+<section class="demo-section" id="checklist-cierre">
+  <span class="section-kicker">// cierre del módulo 4</span>
+  <h2>Checklist de entrega — Módulo 4</h2>
+  <div class="checklist" data-key="entrega-modulo-4">
+    <div class="checklist-header">
+      <span class="checklist-title">Módulo 4 — listo para revisión</span>
+      <span class="checklist-progress"></span>
+    </div>
+    <ul>
+      <li data-item="suite-integracion"><input type="checkbox" id="ec4-1" /><label for="ec4-1">Suite de pruebas de integración presente, corriendo contra dependencias reales (no mockeadas).</label></li>
+      <li data-item="escenario-bdd"><input type="checkbox" id="ec4-2" /><label for="ec4-2">Al menos un escenario BDD ejecutable, con formato Given-When-Then claro en el código o el archivo <code>.feature</code>.</label></li>
+      <li data-item="e2e-critico"><input type="checkbox" id="ec4-3" /><label for="ec4-3">Al menos un flujo E2E crítico automatizado, elegido deliberadamente, no al azar.</label></li>
+      <li data-item="piramide-respetada"><input type="checkbox" id="ec4-4" /><label for="ec4-4">La proporción de tests sigue la forma de pirámide: más unitarios que de integración, más de integración que E2E.</label></li>
+      <li data-item="pr-revisado-m4"><input type="checkbox" id="ec4-5" /><label for="ec4-5">El PR de esta entrega fue revisado por otra persona, con comentarios sustanciales respondidos.</label></li>
+    </ul>
+  </div>
+</section>
+
+<section class="demo-section" id="autoevaluacion">
+  <span class="section-kicker">// autoevaluación</span>
+  <h2>Autoevaluación</h2>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 1 de 5</span>
+    <p class="sc-question">¿Qué distingue principalmente a una prueba E2E de una prueba de integración, según esta página?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">La E2E usa mocks y la de integración no</button>
+      <button class="sc-option" data-correct="true">La E2E ejercita el sistema completo de punta a punta, mientras que la de integración se enfoca en dos o más componentes específicos</button>
+      <button class="sc-option" data-correct="false">No hay ninguna diferencia real entre ambas</button>
+      <button class="sc-option" data-correct="false">La E2E siempre es más rápida de ejecutar</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: la E2E cubre el flujo completo (agregar al carrito, aplicar cupón, pagar) mientras que la
+      integración prueba una interacción puntual (por ejemplo, el acceso a datos contra la base real).
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 2 de 5</span>
+    <p class="sc-question">Según el criterio de esta página para elegir qué automatizar como E2E, ¿cuál de estos es un BUEN candidato?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Verificar que una función rechace exactamente 47 combinaciones distintas de input inválido</button>
+      <button class="sc-option" data-correct="true">El flujo completo de completar una compra, de principio a fin</button>
+      <button class="sc-option" data-correct="false">Un caso límite numérico específico en el cálculo de un descuento</button>
+      <button class="sc-option" data-correct="false">Validar el formato exacto de un campo de texto</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: los "happy paths" críticos para el negocio son buenos candidatos a E2E. Las validaciones
+      exhaustivas de campo o casos límite numéricos son mucho más baratas de cubrir con tests unitarios.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 3 de 5</span>
+    <p class="sc-question">¿Por qué el laboratorio de esta página pide automatizar como máximo 1-2 flujos E2E, y no todos los flujos posibles del proyecto?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Porque las herramientas de E2E tienen un límite técnico de tests</button>
+      <button class="sc-option" data-correct="true">Porque los tests E2E son costosos de mantener y frágiles; la pirámide de pruebas pide que sean pocos y bien elegidos</button>
+      <button class="sc-option" data-correct="false">Porque el Módulo 4 no permite más de dos tests en total</button>
+      <button class="sc-option" data-correct="false">Porque los tests E2E no aportan valor real</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: coherente con la pirámide de pruebas vista en la página anterior — pocos E2E, elegidos
+      deliberadamente por su criticidad, no exhaustivamente.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 4 de 5</span>
+    <p class="sc-question">Según el checklist de cierre del Módulo 4, ¿qué proporción debería tener la suite de pruebas del proyecto?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Igual cantidad exacta de tests unitarios, de integración y E2E</button>
+      <button class="sc-option" data-correct="true">Más tests unitarios que de integración, y más de integración que E2E — la forma de pirámide</button>
+      <button class="sc-option" data-correct="false">Solo tests E2E, ya que cubren todo el sistema</button>
+      <button class="sc-option" data-correct="false">Cero tests unitarios, reemplazados completamente por integración</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: es la aplicación práctica de la pirámide de pruebas al propio proyecto del curso — se
+      audita exactamente esa proporción en la rúbrica de cierre del módulo.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 5 de 5</span>
+    <p class="sc-question">Un test de integración prueba dos módulos internos de tu propio sistema sin usar dobles de prueba entre ellos. ¿Qué requisito del checklist de esta página cumple?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Ninguno — un test de integración siempre debe usar una base de datos externa</button>
+      <button class="sc-option" data-correct="true">Cumple con el ítem de escribir un test de integración contra dependencias reales, ya que "dependencia real" incluye módulos internos sin mockear</button>
+      <button class="sc-option" data-correct="false">Solo cuenta como test unitario, no de integración</button>
+      <button class="sc-option" data-correct="false">Solo es válido si además incluye la interfaz de usuario</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: como se definió en la página anterior del módulo, una prueba de integración puede ser entre
+      dos módulos internos reales, sin necesidad de una base de datos o API externa — lo que importa es la
+      ausencia de dobles de prueba entre los componentes evaluados.
+    </div>
+  </div>
+</section>
