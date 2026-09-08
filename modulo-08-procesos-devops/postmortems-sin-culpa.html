@@ -1,0 +1,230 @@
+---
+layout: lab
+title: "Simulación de Incidente y Postmortems Sin Culpa"
+subtitle: "Preguntar \"¿quién lo rompió?\" garantiza que la próxima vez alguien lo esconda en vez de reportarlo."
+eyebrow: "Módulo 8 · Procesos, Cultura DevOps y Postmortems"
+module: 8
+module_title: "Procesos, Cultura DevOps y Postmortems"
+prev_url: "/modulo-08-procesos-devops/definition-of-done-cultura-calidad.html"
+prev_title: "Definition of Done y cultura de calidad de equipo"
+next_url: "/modulo-08-procesos-devops/laboratorio-incidente-checklist-cierre.html"
+next_title: "Laboratorio de incidente y checklist de cierre"
+---
+
+<nav class="demo-toc">
+  <a href="#el-problema">La cultura que hace que la gente esconda errores</a>
+  <a href="#blameless">Postmortem sin culpa: qué significa en la práctica</a>
+  <a href="#cinco-porques">Los 5 porqués: encontrar la causa raíz</a>
+  <a href="#plantilla">Plantilla de postmortem</a>
+  <a href="#autoevaluacion">Autoevaluación</a>
+</nav>
+
+<section class="demo-section" id="el-problema">
+  <span class="section-kicker">// el problema</span>
+  <h2>La cultura que hace que la gente esconda errores</h2>
+  <p>
+    Un incidente en producción se investiga, y la primera pregunta que hace el equipo es "¿quién desplegó
+    ese cambio?". La persona responsable siente la presión inmediatamente. La próxima vez que alguien
+    cometa un error parecido — y en cualquier sistema suficientemente complejo, alguien lo hará — la
+    reacción racional es minimizarlo, ocultarlo, o arreglarlo en silencio antes de que alguien más lo note.
+  </p>
+  <div class="callout warn">
+    <strong>El costo compuesto:</strong> cada incidente escondido es una lección que el equipo entero no
+    aprende. El mismo tipo de fallo se repite, en otra parte del sistema, con otra persona, meses después
+    — porque la organización nunca tuvo la oportunidad de corregir la condición real que lo permitió.
+    Culpar a una persona resuelve un síntoma y garantiza la recurrencia de la causa.
+  </div>
+  <p>
+    Casi ningún incidente serio es causado por "una persona descuidada". Es casi siempre una combinación de
+    condiciones del sistema: una alerta que no existía, una documentación desactualizada, un proceso de
+    despliegue sin suficientes verificaciones, presión de tiempo no reconocida. Un <strong>postmortem sin
+    culpa</strong> (<em>blameless postmortem</em>) investiga esas condiciones, no a la persona.
+  </p>
+</section>
+
+<section class="demo-section" id="blameless">
+  <span class="section-kicker">// no es "no responsabilizar a nadie"</span>
+  <h2>Postmortem sin culpa: qué significa en la práctica</h2>
+  <p>
+    "Sin culpa" no significa "sin responsabilidad" ni "sin consecuencias" — significa que la conversación
+    se enfoca en el sistema, no en la persona.
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Pregunta con culpa</th><th>Pregunta sin culpa, misma situación</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>"¿Por qué desplegaste sin revisar bien?"</td><td>"¿Qué en nuestro proceso de despliegue permitió que este cambio llegara a producción sin esa revisión?"</td></tr>
+        <tr><td>"¿Quién no configuró la alerta?"</td><td>"¿Por qué no teníamos una alerta para esta condición, y cómo la agregamos ahora?"</td></tr>
+        <tr><td>"Deberías haber sabido que eso iba a fallar"</td><td>"¿Qué información nos hubiera hecho falta tener, en ese momento, para anticiparlo?"</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout accent2">
+    La prueba real de una cultura blameless: cuando alguien comete un error y lo <strong>reporta ellos
+    mismos</strong>, de inmediato, sin que nadie más lo haya notado todavía — porque confían en que la
+    respuesta del equipo va a ser investigar el sistema, no señalarlos.
+  </div>
+</section>
+
+<section class="demo-section" id="cinco-porques">
+  <span class="section-kicker">// una técnica simple para no quedarse en el síntoma</span>
+  <h2>Los 5 porqués: encontrar la causa raíz</h2>
+  <p>
+    Técnica de Toyota, simple pero efectiva: preguntar "¿por qué?" repetidamente sobre cada respuesta,
+    hasta llegar a una condición del sistema que realmente se pueda corregir — no quedarse en el primer
+    síntoma superficial.
+  </p>
+  <div class="code-block">
+    <div class="code-block-label">ejemplo — incidente: la app cobró el monto incorrecto a un cliente</div>
+    <pre>1. ¿Por qué se cobró mal?
+   → Porque el cupón aplicó el descuento dos veces.
+
+2. ¿Por qué se aplicó dos veces?
+   → Porque el endpoint de aplicar cupón no era idempotente:
+     una petición reintentada por la red lo ejecutó de nuevo.
+
+3. ¿Por qué el cliente reintentó la petición?
+   → Porque el timeout configurado en la app era más corto
+     que el tiempo real que tarda ese endpoint bajo carga.
+
+4. ¿Por qué nadie notó ese timeout mal calibrado antes?
+   → Porque no había una prueba de carga (Módulo 7) que
+     ejercitara ese endpoint específico bajo tráfico realista.
+
+5. ¿Por qué no había esa prueba de carga?
+   → Porque el checklist de Definition of Done no incluía
+     pruebas de carga para endpoints de pago — causa raíz real,
+     corregible: se agrega al DoD del equipo.</pre>
+  </div>
+  <div class="callout">
+    Nota cómo cada "por qué" se aleja más de "una persona hizo algo mal" y se acerca a una condición
+    concreta del sistema — la número 5 es accionable (agregar algo al DoD), mientras que "el desarrollador
+    no fue cuidadoso" no lo es: no dice qué cambiar para que no vuelva a pasar.
+  </div>
+</section>
+
+<section class="demo-section" id="plantilla">
+  <span class="section-kicker">// documentar para aprender, no para archivar</span>
+  <h2>Plantilla de postmortem</h2>
+  <div class="code-block">
+    <div class="code-block-label">postmortem-2026-03-10-cobro-duplicado.md</div>
+    <pre># Postmortem: Cobro duplicado por reintento de cupón
+
+**Fecha del incidente:** 2026-03-10
+**Duración:** 14:32 - 15:10 (38 minutos)
+**Severidad:** Alta (impacto financiero directo a clientes)
+
+## Resumen
+Clientes que aplicaron un cupón durante el pico de tráfico del mediodía
+recibieron el descuento aplicado dos veces debido a un reintento
+automático de la app ante un timeout.
+
+## Impacto
+23 transacciones afectadas, monto total S/ 340.
+
+## Línea de tiempo
+- 14:32 — Empieza el pico de tráfico
+- 14:35 — Primeros reportes de clientes en soporte
+- 14:50 — Se identifica la causa (endpoint no idempotente)
+- 15:10 — Fix desplegado, reembolsos iniciados
+
+## Causa raíz (5 porqués)
+[...ver análisis completo...]
+
+## Qué salió bien
+- El equipo de soporte escaló el patrón rápido, no caso por caso.
+
+## Acción de seguimiento
+- [ ] Hacer idempotente el endpoint de aplicar cupón (owner: X, fecha: Y)
+- [ ] Agregar prueba de carga al DoD para endpoints de pago (owner: X)
+- [ ] Ajustar timeout de la app al p99 real medido (owner: X)</pre>
+  </div>
+  <p>
+    Ninguna sección menciona nombres de quién "causó" el incidente — sí registra quién es dueño de cada
+    acción de seguimiento, porque el aprendizaje solo se vuelve real si alguien concreto lo ejecuta.
+  </p>
+</section>
+
+<section class="demo-section" id="autoevaluacion">
+  <span class="section-kicker">// autoevaluación</span>
+  <h2>Autoevaluación</h2>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 1 de 5</span>
+    <p class="sc-question">Según esta página, ¿cuál es el costo compuesto de una cultura que culpa a personas por incidentes?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Los incidentes se vuelven menos frecuentes automáticamente</button>
+      <button class="sc-option" data-correct="true">La gente empieza a esconder o minimizar errores, y la organización pierde la oportunidad de corregir la condición real que los permitió</button>
+      <button class="sc-option" data-correct="false">El equipo se vuelve más rápido resolviendo incidentes</button>
+      <button class="sc-option" data-correct="false">No hay ningún costo real, es solo un estilo de comunicación</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: culpar resuelve el síntoma (alguien se siente responsable) pero no la causa, y activamente
+      desincentiva que futuros errores se reporten a tiempo.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 2 de 5</span>
+    <p class="sc-question">¿Qué significa realmente "sin culpa" (blameless) en un postmortem, según esta página?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Que nadie es responsable de ninguna acción de seguimiento</button>
+      <button class="sc-option" data-correct="true">Que la conversación se enfoca en las condiciones del sistema que permitieron el incidente, no en señalar a una persona</button>
+      <button class="sc-option" data-correct="false">Que el incidente no se documenta para evitar señalar a nadie</button>
+      <button class="sc-option" data-correct="false">Que solo el líder técnico puede participar en la investigación</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: blameless no es ausencia de responsabilidad — las acciones de seguimiento sí tienen dueño
+      explícito. Lo que cambia es el foco: sistema, no persona.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 3 de 5</span>
+    <p class="sc-question">En el ejemplo de los 5 porqués, ¿cuál fue identificada como la causa raíz realmente accionable, a diferencia de las respuestas superficiales?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Que el cliente reintentó la petición de red</button>
+      <button class="sc-option" data-correct="true">Que el Definition of Done del equipo no incluía pruebas de carga para endpoints de pago</button>
+      <button class="sc-option" data-correct="false">Que el desarrollador no fue cuidadoso al escribir el código</button>
+      <button class="sc-option" data-correct="false">Que el cliente tenía una conexión de red inestable</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: es la única respuesta que indica exactamente qué cambiar en el proceso del equipo para que
+      no vuelva a pasar — las anteriores describen síntomas técnicos sin apuntar a una corrección concreta
+      del sistema.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 4 de 5</span>
+    <p class="sc-question">Según el callout de esta página, ¿cuál es la "prueba real" de que una cultura blameless funciona de verdad?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Que nunca vuelve a ocurrir ningún incidente</button>
+      <button class="sc-option" data-correct="true">Que alguien reporta su propio error de inmediato, confiando en que el equipo va a investigar el sistema y no señalarlo</button>
+      <button class="sc-option" data-correct="false">Que los postmortems se escriben en menos de 10 minutos</button>
+      <button class="sc-option" data-correct="false">Que el equipo deja de usar Definition of Done</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: el autorreporte inmediato y voluntario es la señal más clara de que la gente confía en la
+      cultura del equipo, en vez de tener incentivos para ocultar errores.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 5 de 5</span>
+    <p class="sc-question">¿Por qué la plantilla de postmortem de esta página no menciona nombres de quién "causó" el incidente, pero sí asigna un dueño a cada acción de seguimiento?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Es una contradicción sin sentido dentro de la plantilla</button>
+      <button class="sc-option" data-correct="true">Porque el foco blameless es el sistema, no la persona, pero el aprendizaje solo se vuelve real si alguien concreto ejecuta la corrección</button>
+      <button class="sc-option" data-correct="false">Porque las acciones de seguimiento nunca se completan de todas formas</button>
+      <button class="sc-option" data-correct="false">Porque el nombre del responsable del incidente es información confidencial legal</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: separar "quién causó el problema" (no se documenta con juicio) de "quién ejecuta el
+      arreglo" (sí tiene dueño) es exactamente lo que sostiene blameless sin volverse un documento sin
+      consecuencias reales.
+    </div>
+  </div>
+</section>

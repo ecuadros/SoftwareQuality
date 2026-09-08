@@ -1,0 +1,196 @@
+---
+layout: lab
+title: "Definition of Done y Cultura de Calidad de Equipo"
+subtitle: "\"Ya lo terminé\" significa algo distinto para cada persona del equipo, hasta que lo escriben juntos una sola vez."
+eyebrow: "Módulo 8 · Procesos, Cultura DevOps y Postmortems"
+module: 8
+module_title: "Procesos, Cultura DevOps y Postmortems"
+prev_url: "/modulo-07-produccion-seguridad-observabilidad/logging-slo-laboratorio.html"
+prev_title: "Logging estructurado, SLOs y laboratorio"
+next_url: "/modulo-08-procesos-devops/postmortems-sin-culpa.html"
+next_title: "Simulación de incidente y postmortems sin culpa"
+---
+
+<nav class="demo-toc">
+  <a href="#el-problema">"Ya está listo" significaba cosas distintas</a>
+  <a href="#dod-vs-dor">Definition of Done vs. Definition of Ready</a>
+  <a href="#construir-dod">Construir el DoD de tu equipo</a>
+  <a href="#cultura">De checklist a cultura</a>
+  <a href="#autoevaluacion">Autoevaluación</a>
+</nav>
+
+<section class="demo-section" id="el-problema">
+  <span class="section-kicker">// el problema</span>
+  <h2>"Ya está listo" significaba cosas distintas para cada quien</h2>
+  <p>
+    Un desarrollador dice que terminó una feature: escribió el código, corre en su máquina, y hace merge.
+    Para él, "listo" significaba eso. Para su compañera de equipo, "listo" incluía tests (Módulo 3), CI en
+    verde (Módulo 5) y al menos una revisión (Módulo 2). Para el líder técnico, además incluía que el
+    análisis estático (Módulo 6) no marcara nada crítico. Nadie mintió — cada quien tenía una definición
+    distinta de una palabra que sonaba como si todos estuvieran de acuerdo.
+  </p>
+  <div class="callout warn">
+    <strong>El costo aparece después, no en el momento.</strong> La feature "terminada" reaparece dos
+    semanas más tarde como un bug en producción, sin tests que expliquen qué se esperaba de ella, y sin
+    revisión de nadie más que la haya cuestionado. El problema nunca fue la habilidad técnica de la
+    persona — fue que el equipo nunca acordó, por escrito, qué significa "terminado" en <em>este</em>
+    proyecto.
+  </div>
+  <p>
+    Una <strong>Definition of Done (DoD)</strong> es exactamente ese acuerdo explícito: la lista de
+    condiciones que un trabajo debe cumplir antes de poder llamarse terminado, la misma para todo el
+    equipo, escrita una vez y aplicada siempre — no negociada de nuevo en cada PR.
+  </p>
+</section>
+
+<section class="demo-section" id="dod-vs-dor">
+  <span class="section-kicker">// dos acuerdos distintos, fáciles de confundir</span>
+  <h2>Definition of Done vs. Definition of Ready</h2>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th></th><th>Definition of Ready (DoR)</th><th>Definition of Done (DoD)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Se aplica</strong></td><td>Antes de empezar a trabajar en un Issue.</td><td>Antes de cerrar un Issue o fusionar un PR.</td></tr>
+        <tr><td><strong>Pregunta que responde</strong></td><td>¿Tenemos suficiente información para empezar sin bloquearnos a medio camino?</td><td>¿Este trabajo cumple el estándar de calidad acordado?</td></tr>
+        <tr><td><strong>Ejemplo de criterio</strong></td><td>El Issue tiene criterios de aceptación claros y no depende de una decisión de diseño pendiente.</td><td>Tiene tests, pasó CI, fue revisado, no introduce code smells críticos.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Este módulo se enfoca en el DoD porque es el que <strong>se audita al final</strong> — pero un DoR débil
+    (Issues ambiguos) es una causa común de que el DoD nunca se cumpla: es difícil terminar bien algo que
+    empezó mal definido.
+  </p>
+</section>
+
+<section class="demo-section" id="construir-dod">
+  <span class="section-kicker">// el ejercicio central de esta página</span>
+  <h2>Construir el DoD de tu equipo</h2>
+  <p>
+    No se inventa desde cero — es la suma de las prácticas que ya construiste en los módulos anteriores,
+    hechas explícitas en un solo lugar donde todo el equipo puede verlas.
+  </p>
+  <div class="checklist" data-key="dod-ejemplo">
+    <div class="checklist-header">
+      <span class="checklist-title">DoD de ejemplo, construido con lo visto en el curso</span>
+      <span class="checklist-progress"></span>
+    </div>
+    <ul>
+      <li data-item="dod-tests"><input type="checkbox" id="dod-1" /><label for="dod-1">Tests unitarios para la lógica nueva o modificada, siguiendo TDD (Módulo 3).</label></li>
+      <li data-item="dod-ci"><input type="checkbox" id="dod-2" /><label for="dod-2">Pipeline de CI en verde, incluyendo el quality gate de cobertura (Módulo 5).</label></li>
+      <li data-item="dod-review"><input type="checkbox" id="dod-3" /><label for="dod-3">Al menos una aprobación real de otra persona, con comentarios sustanciales respondidos (Módulo 2).</label></li>
+      <li data-item="dod-smells"><input type="checkbox" id="dod-4" /><label for="dod-4">Sin code smells "bloqueantes" nuevos según el análisis estático (Módulo 6).</label></li>
+      <li data-item="dod-seguridad"><input type="checkbox" id="dod-5" /><label for="dod-5">Sin vulnerabilidades críticas nuevas sin resolver o documentar (Módulo 7).</label></li>
+      <li data-item="dod-docs"><input type="checkbox" id="dod-6" /><label for="dod-6">Documentación o comentarios actualizados si el comportamiento público cambió.</label></li>
+    </ul>
+  </div>
+  <div class="callout accent2">
+    Este es un punto de partida razonable, no una plantilla obligatoria. Lo que importa no es copiar esta
+    lista exacta — es que <strong>tu equipo</strong> la escriba, la acuerde explícitamente, y la revise
+    cuando deje de servir.
+  </div>
+</section>
+
+<section class="demo-section" id="cultura">
+  <span class="section-kicker">// el riesgo de quedarse solo en el papel</span>
+  <h2>De checklist a cultura</h2>
+  <p>
+    Un DoD escrito que nadie de verdad aplica es peor que no tener ninguno — da una falsa sensación de
+    disciplina. La diferencia entre un checklist decorativo y cultura real de calidad está en si el equipo
+    <strong>protege el DoD incluso bajo presión de fecha</strong>.
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Presión de equipo</th><th>Respuesta que erosiona el DoD</th><th>Respuesta que lo protege</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>"Hay que entregar hoy"</td><td>Fusionar sin revisión "por esta vez"</td><td>Negociar el alcance de la feature, no el estándar de calidad</td></tr>
+        <tr><td>"El test es difícil de escribir"</td><td>Comentar el test y seguir</td><td>Registrar como deuda técnica explícita (Módulo 1), con Issue y plazo</td></tr>
+        <tr><td>"Total, es un cambio chiquito"</td><td>Saltarse el pipeline de CI</td><td>El pipeline no distingue "chiquito" de "grande" — corre siempre</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="demo-section" id="autoevaluacion">
+  <span class="section-kicker">// autoevaluación</span>
+  <h2>Autoevaluación</h2>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 1 de 5</span>
+    <p class="sc-question">En el ejemplo inicial, ¿cuál fue la causa raíz del problema, según esta página?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">El desarrollador no tenía suficiente experiencia técnica</button>
+      <button class="sc-option" data-correct="true">El equipo nunca acordó explícitamente, por escrito, qué significaba "terminado" en ese proyecto</button>
+      <button class="sc-option" data-correct="false">El proyecto no tenía suficientes desarrolladores</button>
+      <button class="sc-option" data-correct="false">El líder técnico no revisó personalmente cada PR</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: cada persona tenía una definición razonable de "listo" — el problema fue la ausencia de un
+      acuerdo explícito y compartido, no la falta de habilidad de nadie.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 2 de 5</span>
+    <p class="sc-question">¿Cuál es la diferencia principal entre Definition of Ready y Definition of Done?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Son sinónimos, ambos se aplican en el mismo momento</button>
+      <button class="sc-option" data-correct="true">El DoR se aplica antes de empezar a trabajar en un Issue; el DoD se aplica antes de darlo por terminado</button>
+      <button class="sc-option" data-correct="false">El DoR solo aplica a proyectos de Python</button>
+      <button class="sc-option" data-correct="false">El DoD se aplica una sola vez, al inicio del proyecto</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: el DoR previene empezar a trabajar sobre algo mal definido; el DoD define qué significa
+      haber terminado bien ese trabajo.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 3 de 5</span>
+    <p class="sc-question">Según esta página, ¿de dónde debería salir el contenido del DoD de un equipo?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">De copiar exactamente la plantilla de otro equipo, sin adaptarla</button>
+      <button class="sc-option" data-correct="true">De las prácticas de calidad que el equipo ya construyó a lo largo del curso, hechas explícitas y acordadas en conjunto</button>
+      <button class="sc-option" data-correct="false">De una decisión unilateral del líder técnico, sin consultar al resto</button>
+      <button class="sc-option" data-correct="false">De un estándar internacional obligatorio que no se puede modificar</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: el ejemplo de DoD de esta página resume prácticas ya vistas en módulos anteriores — lo
+      importante es que el equipo las acuerde explícitamente, no que copie una lista externa sin discutirla.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 4 de 5</span>
+    <p class="sc-question">Según la tabla de presión de equipo, ¿cuál es la respuesta que PROTEGE el DoD ante un test difícil de escribir bajo presión de fecha?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Comentar el test para que no bloquee el pipeline</button>
+      <button class="sc-option" data-correct="true">Registrarlo como deuda técnica explícita, con un Issue y un plazo</button>
+      <button class="sc-option" data-correct="false">Eliminar el test por completo sin dejar rastro</button>
+      <button class="sc-option" data-correct="false">Ignorar el resultado del pipeline de CI para ese PR específico</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: la respuesta que protege el DoD hace visible la excepción (como deuda técnica del Módulo 1)
+      en vez de esconderla silenciosamente.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 5 de 5</span>
+    <p class="sc-question">¿Por qué esta página afirma que un DoD escrito pero no aplicado de verdad es "peor que no tener ninguno"?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Porque escribir un DoD toma demasiado tiempo del equipo</button>
+      <button class="sc-option" data-correct="true">Porque da una falsa sensación de disciplina de calidad que no existe realmente en la práctica</button>
+      <button class="sc-option" data-correct="false">Porque un DoD escrito es ilegal según las normas del curso</button>
+      <button class="sc-option" data-correct="false">Porque ralentiza el pipeline de CI innecesariamente</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: un checklist decorativo que nadie protege bajo presión genera una ilusión de control de
+      calidad — el riesgo real sigue ahí, solo que ahora es invisible porque "en el papel" está cubierto.
+    </div>
+  </div>
+</section>

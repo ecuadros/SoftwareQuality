@@ -1,0 +1,234 @@
+---
+layout: lab
+title: "Logging Estructurado, SLIs/SLOs y Laboratorio"
+subtitle: "\"El servidor se cayó ayer como a las 3\" no es un dato — es un recuerdo vago. La observabilidad existe para reemplazarlo con evidencia."
+eyebrow: "Módulo 7 · Calidad en Producción: Seguridad, Performance y Observabilidad"
+module: 7
+module_title: "Calidad en Producción: Seguridad, Performance y Observabilidad"
+prev_url: "/modulo-07-produccion-seguridad-observabilidad/sanitizers-performance-carga.html"
+prev_title: "Sanitizers, pruebas de carga y performance"
+next_url: "/modulo-08-procesos-devops/definition-of-done-cultura-calidad.html"
+next_title: "Definition of Done y cultura de calidad de equipo"
+---
+
+<nav class="demo-toc">
+  <a href="#el-problema">"Creo que falló como a las 3 de la tarde"</a>
+  <a href="#logging-estructurado">Logging estructurado por stack</a>
+  <a href="#sli-slo">SLIs, SLOs y error budget</a>
+  <a href="#laboratorio">Laboratorio: instrumenta tu propio repo</a>
+  <a href="#checklist-cierre">Checklist de cierre — Módulo 7</a>
+  <a href="#autoevaluacion">Autoevaluación</a>
+</nav>
+
+<section class="demo-section" id="el-problema">
+  <span class="section-kicker">// el problema</span>
+  <h2>"Creo que falló como a las 3 de la tarde"</h2>
+  <p>
+    Un cliente reporta que su compra falló ayer por la tarde. El log del servidor tiene miles de líneas de
+    texto libre como <code>"procesando pago..."</code> y <code>"error al procesar"</code>, sin
+    <code>id</code> de transacción, sin marca de tiempo consistente, sin identificar a qué usuario
+    pertenecía. Encontrar esa falla específica entre miles de líneas parecidas, escritas por distintos
+    desarrolladores en distintos formatos, se convierte en arqueología en vez de en una búsqueda de dos
+    minutos.
+  </p>
+  <div class="callout warn">
+    <strong>El costo no es solo el tiempo perdido buscando</strong> — es que, cuando por fin ocurre un
+    incidente serio en producción (Módulo 8), la calidad de tus logs determina si el postmortem tiene datos
+    reales o especulación. Este es, otra vez, "shift left" (Módulo 1): invertir en logging estructurado
+    <em>antes</em> del incidente es mucho más barato que reconstruir qué pasó después.
+  </div>
+</section>
+
+<section class="demo-section" id="logging-estructurado">
+  <span class="section-kicker">// texto libre vs. datos consultables</span>
+  <h2>Logging estructurado por stack</h2>
+  <p>
+    <strong>Logging estructurado</strong> significa emitir cada evento como un objeto con campos
+    consistentes (JSON, típicamente) en vez de una oración de texto libre — así una herramienta de
+    observabilidad puede filtrar, agregar y alertar sobre esos campos, no adivinar parseándolos.
+  </p>
+
+  <div class="code-block">
+    <div class="code-block-label">Python — structlog</div>
+    <pre>import structlog
+log = structlog.get_logger()
+
+log.info("pago_procesado", usuario_id=42, monto=108.00, cupon="VIP10")
+<span class="cm"># {"event": "pago_procesado", "usuario_id": 42, "monto": 108.0, "cupon": "VIP10", "timestamp": "..."}</span></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-block-label">Java/Spring Boot — Logback + logstash-encoder</div>
+    <pre>log.info("pago_procesado usuario_id={} monto={} cupon={}", usuarioId, monto, cupon);
+<span class="cm">// con LogstashEncoder configurado, Logback emite JSON automáticamente:
+// {"message": "pago_procesado...", "usuario_id": 42, "monto": 108.0, "level": "INFO"}</span></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-block-label">C++ — spdlog</div>
+    <pre>{% raw %}<span class="cm">// fmt (la librería detrás de spdlog) usa {} como placeholder,</span>
+<span class="cm">// por eso las llaves literales del JSON se escapan como {{ y }}</span>
+spdlog::info(R"({{"event": "pago_procesado", "usuario_id": {}, "monto": {}}})", usuarioId, monto);{% endraw %}</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-block-label">Flutter/Dart — logger + envío a un backend de observabilidad</div>
+    <pre>logger.i(jsonEncode({
+  'event': 'pago_procesado',
+  'usuario_id': usuarioId,
+  'monto': monto,
+}));</pre>
+  </div>
+
+  <div class="callout">
+    En Spring Boot, esto se complementa con <strong>Spring Boot Actuator</strong>: expone endpoints como
+    <code>/actuator/health</code> y <code>/actuator/metrics</code> que ya traen métricas estándar (uso de
+    memoria, conexiones activas, latencia por endpoint) sin necesidad de instrumentar cada una a mano.
+  </div>
+</section>
+
+<section class="demo-section" id="sli-slo">
+  <span class="section-kicker">// del log individual a la promesa del sistema</span>
+  <h2>SLIs, SLOs y error budget</h2>
+  <p>
+    Un log cuenta la historia de un evento. Un <strong>SLI</strong> (Service Level Indicator) resume miles
+    de esos eventos en un número: "porcentaje de requests que respondieron en menos de 200ms", "porcentaje
+    de requests exitosos". Un <strong>SLO</strong> (Service Level Objective) es la meta que tu equipo se
+    compromete a cumplir sobre ese SLI.
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>SLO de disponibilidad</th><th>Tiempo de falla permitido al mes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>99% ("dos nueves")</td><td>~7.3 horas</td></tr>
+        <tr><td>99.9% ("tres nueves")</td><td>~43 minutos</td></tr>
+        <tr><td>99.99% ("cuatro nueves")</td><td>~4.3 minutos</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout accent2">
+    Ese tiempo de falla permitido es tu <strong>error budget</strong>. No es un fracaso gastarlo — es una
+    herramienta de decisión: si ya gastaste el presupuesto del mes, el equipo prioriza estabilidad sobre
+    features nuevas. Si sobra presupuesto, hay margen para asumir más riesgo. Sin un SLO explícito, esa
+    conversación se vuelve una discusión de opiniones en vez de una decisión basada en datos.
+  </div>
+</section>
+
+<section class="demo-section" id="laboratorio">
+  <span class="section-kicker">// laboratorio</span>
+  <h2>Laboratorio: instrumenta tu propio repo</h2>
+  <div class="checklist" data-key="laboratorio-observabilidad">
+    <div class="checklist-header">
+      <span class="checklist-title">Pasos del laboratorio</span>
+      <span class="checklist-progress"></span>
+    </div>
+    <ul>
+      <li data-item="scanner-en-ci"><input type="checkbox" id="l7-1" /><label for="l7-1">Agregaste un dependency scanner de tu stack como paso del pipeline de CI (Módulo 5).</label></li>
+      <li data-item="sanitizers-o-perf"><input type="checkbox" id="l7-2" /><label for="l7-2">Si tu proyecto es C++, corriste tu suite de tests con ASan/UBSan al menos una vez; si es otro stack, corriste una prueba de carga o de performance real.</label></li>
+      <li data-item="logging-json"><input type="checkbox" id="l7-3" /><label for="l7-3">Reemplazaste al menos un <code>print</code>/log de texto libre por un log estructurado con campos consistentes.</label></li>
+      <li data-item="slo-definido"><input type="checkbox" id="l7-4" /><label for="l7-4">Definiste al menos un SLI y un SLO explícito para tu proyecto (aunque sea aspiracional).</label></li>
+      <li data-item="pr-observabilidad"><input type="checkbox" id="l7-5" /><label for="l7-5">Abriste el PR correspondiente siguiendo el flujo del Módulo 2, con revisión real.</label></li>
+    </ul>
+  </div>
+</section>
+
+<section class="demo-section" id="checklist-cierre">
+  <span class="section-kicker">// cierre del módulo 7</span>
+  <h2>Checklist de entrega — Módulo 7</h2>
+  <div class="checklist" data-key="entrega-modulo-7">
+    <div class="checklist-header">
+      <span class="checklist-title">Módulo 7 — listo para revisión</span>
+      <span class="checklist-progress"></span>
+    </div>
+    <ul>
+      <li data-item="scanner-obligatorio"><input type="checkbox" id="ec7-1" /><label for="ec7-1">Dependency scanner corriendo como parte obligatoria del pipeline de CI.</label></li>
+      <li data-item="sin-criticas"><input type="checkbox" id="ec7-2" /><label for="ec7-2">Cero vulnerabilidades críticas sin resolver o sin documentar como deuda técnica explícita.</label></li>
+      <li data-item="memoria-verificada"><input type="checkbox" id="ec7-3" /><label for="ec7-3">(C++) Suite de tests corrida con sanitizers al menos una vez, sin reportes sin investigar.</label></li>
+      <li data-item="logs-estructurados"><input type="checkbox" id="ec7-4" /><label for="ec7-4">Al menos un flujo crítico del proyecto emite logs estructurados en vez de texto libre.</label></li>
+      <li data-item="slo-documentado"><input type="checkbox" id="ec7-5" /><label for="ec7-5">Al menos un SLI/SLO documentado en el repo (README o Issue fijado).</label></li>
+    </ul>
+  </div>
+</section>
+
+<section class="demo-section" id="autoevaluacion">
+  <span class="section-kicker">// autoevaluación</span>
+  <h2>Autoevaluación</h2>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 1 de 5</span>
+    <p class="sc-question">Según el ejemplo inicial, ¿cuál es el problema principal de un log como <code>"error al procesar"</code> escrito como texto libre?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Que ocupa demasiado espacio en disco</button>
+      <button class="sc-option" data-correct="true">Que no se puede filtrar ni consultar por campos específicos (usuario, transacción) sin parsear texto a mano</button>
+      <button class="sc-option" data-correct="false">Que solo funciona en servidores Linux</button>
+      <button class="sc-option" data-correct="false">Que no puede escribirse en inglés</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: sin campos estructurados y consistentes, encontrar un evento específico entre miles de
+      líneas parecidas se vuelve arqueología en vez de una consulta directa.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 2 de 5</span>
+    <p class="sc-question">¿Qué expone específicamente Spring Boot Actuator que menciona esta página?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Solo el código fuente de la aplicación</button>
+      <button class="sc-option" data-correct="true">Endpoints como <code>/actuator/health</code> y <code>/actuator/metrics</code> con métricas estándar de la aplicación, sin instrumentación manual</button>
+      <button class="sc-option" data-correct="false">Un reemplazo completo del pipeline de CI</button>
+      <button class="sc-option" data-correct="false">La base de datos MongoDB en texto plano</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: Actuator viene con métricas estándar ya integradas (memoria, conexiones, latencia por
+      endpoint) sin que el equipo tenga que instrumentar cada una manualmente.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 3 de 5</span>
+    <p class="sc-question">Según la tabla de SLOs de esta página, ¿cuánto tiempo de falla al mes permite un SLO de 99.9% de disponibilidad?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">~7.3 horas</button>
+      <button class="sc-option" data-correct="true">~43 minutos</button>
+      <button class="sc-option" data-correct="false">~4.3 minutos</button>
+      <button class="sc-option" data-correct="false">Cero minutos — 99.9% significa que nunca puede fallar</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: cada "nueve" adicional reduce el tiempo de falla permitido en un orden de magnitud —
+      99.9% equivale a aproximadamente 43 minutos de indisponibilidad tolerada por mes.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 4 de 5</span>
+    <p class="sc-question">Según el callout sobre error budget, ¿qué decisión de equipo permite tomar un error budget explícito?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Ninguna — el error budget es solo una métrica decorativa</button>
+      <button class="sc-option" data-correct="true">Decidir si priorizar estabilidad sobre features nuevas según cuánto presupuesto de fallas ya se gastó ese mes, en vez de discutirlo por opinión</button>
+      <button class="sc-option" data-correct="false">Eliminar por completo la necesidad de monitoreo</button>
+      <button class="sc-option" data-correct="false">Aumentar automáticamente el sueldo del equipo de operaciones</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: el error budget convierte "¿deberíamos frenar features para estabilizar?" en una decisión
+      basada en datos concretos, no en una discusión subjetiva.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 5 de 5</span>
+    <p class="sc-question">Según el callout de "shift left" de esta página, ¿por qué invertir en logging estructurado antes de un incidente es más barato que hacerlo después?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Porque las librerías de logging estructurado son gratuitas y las de texto libre no</button>
+      <button class="sc-option" data-correct="true">Porque la calidad de los logs existentes determina si el postmortem de un incidente real tiene datos concretos o solo especulación</button>
+      <button class="sc-option" data-correct="false">Porque el logging estructurado hace que el código compile más rápido</button>
+      <button class="sc-option" data-correct="false">Porque los logs de texto libre están prohibidos por ley en producción</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: cuando ocurre un incidente serio (Módulo 8), reconstruir qué pasó exactamente depende
+      completamente de la calidad de la evidencia que ya existía — no se puede instrumentar en retrospectiva
+      un evento que ya ocurrió.
+    </div>
+  </div>
+</section>

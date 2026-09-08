@@ -1,0 +1,223 @@
+---
+layout: lab
+title: "Sanitizers, Pruebas de Carga y Performance"
+subtitle: "Un test en verde no dice nada sobre qué pasa con memoria corrupta o con 10,000 usuarios simultáneos."
+eyebrow: "Módulo 7 · Calidad en Producción: Seguridad, Performance y Observabilidad"
+module: 7
+module_title: "Calidad en Producción: Seguridad, Performance y Observabilidad"
+prev_url: "/modulo-07-produccion-seguridad-observabilidad/dependency-scanning-seguridad.html"
+prev_title: "Dependency scanning y seguridad de la cadena de suministro"
+next_url: "/modulo-07-produccion-seguridad-observabilidad/logging-slo-laboratorio.html"
+next_title: "Logging estructurado, SLOs y laboratorio"
+---
+
+<nav class="demo-toc">
+  <a href="#el-problema">El test que pasó y el programa que igual estaba roto</a>
+  <a href="#sanitizers">Sanitizers: ASan y UBSan en C++</a>
+  <a href="#valgrind">Valgrind: fugas de memoria en detalle</a>
+  <a href="#performance">Pruebas de carga y performance por stack</a>
+  <a href="#autoevaluacion">Autoevaluación</a>
+</nav>
+
+<section class="demo-section" id="el-problema">
+  <span class="section-kicker">// el problema</span>
+  <h2>El test que pasó y el programa que igual estaba roto</h2>
+  <p>
+    Recuerda la pregunta 5 del Módulo 3: un test en verde en C++ no garantiza ausencia de
+    <strong>undefined behavior</strong>. Aquí está el ejemplo completo. Una función accede a un índice de
+    un arreglo que está apenas un elemento fuera de rango:
+  </p>
+  <div class="code-block">
+    <div class="code-block-label">buggy.cpp</div>
+    <pre>int obtener_ultimo(const std::vector&lt;int&gt;&amp; datos) {
+    return datos[datos.size()];  <span class="cm">// debería ser datos.size() - 1</span>
+}</pre>
+  </div>
+  <div class="callout warn">
+    <strong>El test correspondiente puede pasar igual.</strong> Leer un byte fuera de un arreglo no
+    siempre produce un crash inmediato — a veces lee memoria "vecina" que por casualidad tiene un valor
+    parecido al esperado. El comportamiento es indefinido: puede funcionar en tu máquina, en tu versión del
+    compilador, con esos datos específicos — y fallar de forma impredecible en producción, con otra versión
+    del compilador o de la librería estándar.
+  </div>
+  <p>
+    Los <strong>sanitizers</strong> y <strong>Valgrind</strong> existen exactamente para esto: detectan el
+    acceso indebido a memoria <em>en el momento en que ocurre</em>, sin importar si por casualidad el
+    resultado "se ve bien".
+  </p>
+</section>
+
+<section class="demo-section" id="sanitizers">
+  <span class="section-kicker">// instrumentación en tiempo de compilación</span>
+  <h2>Sanitizers: ASan y UBSan en C++</h2>
+  <p>
+    Los <em>sanitizers</em> de Clang/GCC recompilan tu código agregando verificaciones automáticas en cada
+    acceso a memoria. <strong>AddressSanitizer (ASan)</strong> detecta accesos fuera de rango, use-after-free
+    y fugas; <strong>UndefinedBehaviorSanitizer (UBSan)</strong> detecta overflow de enteros, divisiones por
+    cero y otros comportamientos indefinidos del estándar de C++.
+  </p>
+  <div class="code-block">
+    <div class="code-block-label">bash — compilar con sanitizers</div>
+    <pre>$ cmake -B build -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -g"
+$ cmake --build build
+$ ./build/mi_programa</pre>
+  </div>
+  <div class="code-block">
+    <div class="code-block-label">salida de ASan sobre buggy.cpp</div>
+    <pre><span class="cm">==12345==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x...
+READ of size 4 at 0x... thread T0
+    #0 obtener_ultimo(std::vector&lt;int&gt; const&amp;) buggy.cpp:2
+    #1 main main.cpp:8
+
+0x... is located 0 bytes after a region of size 12 allocated here</span></pre>
+  </div>
+  <div class="callout">
+    ASan y UBSan corren <strong>dentro de tu suite de tests existente</strong> (Módulo 3) — no son una
+    herramienta separada que necesite casos de prueba nuevos. Compilas los mismos tests con las flags de
+    arriba y, si algún test ejercita el bug, el sanitizer lo reporta con la línea exacta, en vez de que el
+    test simplemente "pase por casualidad".
+  </div>
+</section>
+
+<section class="demo-section" id="valgrind">
+  <span class="section-kicker">// instrumentación en tiempo de ejecución</span>
+  <h2>Valgrind: fugas de memoria en detalle</h2>
+  <p>
+    A diferencia de los sanitizers (que requieren recompilar), <strong>Valgrind</strong> ejecuta tu binario
+    ya compilado dentro de una máquina virtual que intercepta cada operación de memoria. Es más lento, pero
+    no requiere cambiar el build — útil para correrlo puntualmente sobre un binario de producción.
+  </p>
+  <div class="code-block">
+    <div class="code-block-label">bash</div>
+    <pre>$ valgrind --leak-check=full ./build/mi_programa
+<span class="cm">==12345== HEAP SUMMARY:
+==12345==     in use at exit: 40 bytes in 1 blocks
+==12345==   total heap usage: 3 allocs, 2 frees, 1,064 bytes allocated
+==12345==
+==12345== 40 bytes in 1 blocks are definitely lost in loss record 1 of 1
+==12345==    at 0x...: malloc
+==12345==    by 0x...: crear_buffer() (buggy.cpp:15)</span></pre>
+  </div>
+  <p>
+    <code>definitely lost</code> significa que esa memoria ya no tiene ningún puntero que la referencie —
+    una fuga real, que en un servidor de larga duración crece hasta agotar la memoria disponible.
+  </p>
+</section>
+
+<section class="demo-section" id="performance">
+  <span class="section-kicker">// no solo memoria — también velocidad bajo carga</span>
+  <h2>Pruebas de carga y performance por stack</h2>
+  <p>
+    Un sistema puede estar libre de bugs de memoria y aun así fallar bajo carga real. Cada stack de este
+    curso ataca esa pregunta con una herramienta distinta, según dónde vive el riesgo:
+  </p>
+
+  <div class="code-block">
+    <div class="code-block-label">bash — Python/API: k6</div>
+    <pre>$ k6 run carga.js
+<span class="cm">#      ✓ status es 200
+#      http_req_duration..: avg=45ms p(95)=120ms
+#      http_reqs..........: 12000 requests in 30s</span></pre>
+  </div>
+
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Stack</th><th>Herramienta</th><th>Qué mide</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Python</strong></td><td>k6 (o Locust)</td><td>Latencia y throughput de una API bajo N usuarios virtuales simultáneos.</td></tr>
+        <tr><td><strong>Java/Spring Boot</strong></td><td>Gatling o JMeter, más <code>/actuator/metrics</code></td><td>Igual que k6, más métricas internas expuestas por Spring Boot Actuator (uso de conexiones, latencia por endpoint) durante la carga.</td></tr>
+        <tr><td><strong>Flutter/Dart</strong></td><td>Flutter DevTools (pestaña Performance)</td><td>Frames por segundo y "jank" — cuadros que tardan más de 16ms y rompen la fluidez visual.</td></tr>
+        <tr><td><strong>C++</strong></td><td>Perfilado con <code>perf</code> / benchmarks con Google Benchmark</td><td>Tiempo de CPU por función, útil cuando el riesgo es cómputo intensivo, no una API con usuarios concurrentes.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout accent2">
+    No es casualidad que cada stack use una herramienta distinta: el riesgo de performance de una API REST
+    (Python), una app móvil (Flutter) y una librería de cómputo (C++) es un problema distinto en cada caso
+    — "performance" no es una sola métrica, es "lo que le importa a ese sistema en particular".
+  </div>
+</section>
+
+<section class="demo-section" id="autoevaluacion">
+  <span class="section-kicker">// autoevaluación</span>
+  <h2>Autoevaluación</h2>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 1 de 5</span>
+    <p class="sc-question">En el ejemplo de <code>obtener_ultimo</code>, ¿por qué el test correspondiente puede pasar en verde aunque el código tenga un bug real de memoria?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Porque GoogleTest no detecta errores en funciones que devuelven <code>int</code></button>
+      <button class="sc-option" data-correct="true">Porque leer memoria fuera de rango es undefined behavior — puede "funcionar por casualidad" leyendo un valor parecido al esperado, sin garantía de que siga así</button>
+      <button class="sc-option" data-correct="false">Porque el test no se compiló correctamente</button>
+      <button class="sc-option" data-correct="false">Porque los vectores de C++ no pueden tener bugs de índice</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: undefined behavior no significa "siempre falla" — significa que el estándar no garantiza
+      ningún comportamiento específico, lo que incluye "funcionar como si nada" hasta que deja de hacerlo.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 2 de 5</span>
+    <p class="sc-question">¿Qué diferencia principal hay entre usar sanitizers (ASan/UBSan) y usar Valgrind?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Valgrind requiere recompilar con flags especiales; los sanitizers no</button>
+      <button class="sc-option" data-correct="true">Los sanitizers requieren recompilar el código con flags especiales; Valgrind ejecuta el binario ya compilado dentro de una máquina virtual</button>
+      <button class="sc-option" data-correct="false">Son exactamente la misma herramienta con nombres distintos</button>
+      <button class="sc-option" data-correct="false">Valgrind solo funciona en Windows</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: esa diferencia explica por qué Valgrind es más lento pero más flexible (no exige rebuild),
+      mientras los sanitizers son más rápidos pero requieren instrumentar el build.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 3 de 5</span>
+    <p class="sc-question">En la salida de Valgrind mostrada, ¿qué significa que 40 bytes estén marcados como <code>definitely lost</code>?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Que el programa usó 40 bytes de más de lo necesario, sin ningún problema real</button>
+      <button class="sc-option" data-correct="true">Que esa memoria ya no tiene ningún puntero que la referencie — es una fuga real</button>
+      <button class="sc-option" data-correct="false">Que el programa terminó con un error de compilación</button>
+      <button class="sc-option" data-correct="false">Que Valgrind no pudo determinar si hay una fuga o no</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: "definitely lost" es la categoría más clara de fuga de memoria — memoria reservada que
+      nunca se libera y a la que ya no se puede acceder, justamente lo que agota recursos en servidores de
+      larga duración.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 4 de 5</span>
+    <p class="sc-question">Según la tabla de herramientas de performance, ¿qué mide específicamente Flutter DevTools que no mide k6?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Latencia de una API REST bajo carga</button>
+      <button class="sc-option" data-correct="true">Frames por segundo y "jank" — cuadros que rompen la fluidez visual de la app</button>
+      <button class="sc-option" data-correct="false">Fugas de memoria en el heap</button>
+      <button class="sc-option" data-correct="false">Vulnerabilidades de dependencias conocidas</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: k6 mide performance de APIs bajo carga de red; Flutter DevTools mide la fluidez visual real
+      de una app en un dispositivo — son riesgos de performance distintos según el tipo de sistema.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 5 de 5</span>
+    <p class="sc-question">¿Por qué esta página usa una herramienta de performance distinta para cada stack, en vez de una sola herramienta universal?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Porque no existe ninguna herramienta que funcione en más de un lenguaje</button>
+      <button class="sc-option" data-correct="true">Porque "performance" significa algo distinto según el tipo de sistema: latencia de API, fluidez visual, o tiempo de cómputo</button>
+      <button class="sc-option" data-correct="false">Por una decisión arbitraria de este curso, sin razón técnica</button>
+      <button class="sc-option" data-correct="false">Porque las herramientas universales son siempre más lentas</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: el riesgo de performance de una API REST, una app móvil y una librería de cómputo intensivo
+      son problemas distintos — cada herramienta está diseñada para medir lo que realmente importa en cada
+      contexto.
+    </div>
+  </div>
+</section>

@@ -1,0 +1,219 @@
+---
+layout: lab
+title: "Dependency Scanning y Seguridad de la Cadena de Suministro"
+subtitle: "No escribiste el 90% del código de tu propio proyecto — lo instalaste. Esa es exactamente la superficie que nadie audita."
+eyebrow: "Módulo 7 · Calidad en Producción: Seguridad, Performance y Observabilidad"
+module: 7
+module_title: "Calidad en Producción: Seguridad, Performance y Observabilidad"
+prev_url: "/modulo-06-analisis-estatico-refactor/sonarcloud-refactorizacion-laboratorio.html"
+prev_title: "SonarCloud, refactorización y laboratorio"
+next_url: "/modulo-07-produccion-seguridad-observabilidad/sanitizers-performance-carga.html"
+next_title: "Sanitizers, pruebas de carga y performance"
+---
+
+<nav class="demo-toc">
+  <a href="#el-problema">El incidente que puso esto en el mapa</a>
+  <a href="#que-es-sca">Qué es dependency scanning (SCA)</a>
+  <a href="#herramientas">Herramientas por stack</a>
+  <a href="#politica">Qué hacer cuando aparece una vulnerabilidad</a>
+  <a href="#autoevaluacion">Autoevaluación</a>
+</nav>
+
+<section class="demo-section" id="el-problema">
+  <span class="section-kicker">// el problema</span>
+  <h2>El incidente que puso esto en el mapa</h2>
+  <p>
+    En diciembre de 2021, una vulnerabilidad crítica de ejecución remota de código
+    (<strong>Log4Shell</strong>, CVE-2021-44228) apareció en <strong>Log4j</strong>, una librería de
+    logging de Java usada — directa o transitivamente — en una fracción enorme del software empresarial
+    del planeta. No era un bug en el código de ninguna de las empresas afectadas: era un bug en una
+    dependencia de una dependencia de una dependencia, tan profundo en el árbol de paquetes que muchos
+    equipos ni sabían que la usaban.
+  </p>
+  <div class="callout warn">
+    <strong>La lección no es "usen menos librerías".</strong> Nadie reescribe su propio parser JSON o su
+    propio cliente HTTP — depender de librerías es la forma normal y correcta de construir software. La
+    lección es que <strong>tu superficie de riesgo de seguridad incluye código que nunca leíste</strong>, y
+    que necesitas una forma automática de saber cuándo una de esas dependencias tiene una vulnerabilidad
+    conocida — no enterarte por las noticias.
+  </div>
+  <p>
+    <strong>Dependency scanning</strong> (también llamado SCA, <em>Software Composition Analysis</em>) es
+    exactamente esa forma automática: una herramienta que compara las versiones exactas de tus dependencias
+    contra bases de datos públicas de vulnerabilidades conocidas (CVE) y te avisa antes de que sea un
+    incidente.
+  </p>
+</section>
+
+<section class="demo-section" id="que-es-sca">
+  <span class="section-kicker">// vocabulario</span>
+  <h2>Qué es dependency scanning (SCA)</h2>
+  <p>
+    A diferencia del análisis estático del Módulo 6 (que examina <em>tu</em> código en busca de code
+    smells), el dependency scanning examina el código <strong>de terceros</strong> que declaraste en tu
+    archivo de dependencias (<code>requirements.txt</code>, <code>pom.xml</code>, <code>pubspec.yaml</code>,
+    <code>conanfile.txt</code>), incluyendo dependencias <strong>transitivas</strong> — las que tus
+    dependencias directas traen consigo, sin que tú las hayas elegido.
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th></th><th>Análisis estático (Módulo 6)</th><th>Dependency scanning (esta página)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Qué examina</strong></td><td>El código que tú escribiste.</td><td>El código de terceros que declaraste como dependencia (directa o transitiva).</td></tr>
+        <tr><td><strong>Contra qué compara</strong></td><td>Reglas de diseño y estilo.</td><td>Bases de datos públicas de vulnerabilidades conocidas (CVE / NVD).</td></tr>
+        <tr><td><strong>Se corrige</strong></td><td>Refactorizando tu propio código.</td><td>Actualizando la dependencia a una versión sin la vulnerabilidad (o mitigando si no existe fix aún).</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="demo-section" id="herramientas">
+  <span class="section-kicker">// una herramienta por ecosistema, con honestidad sobre las diferencias</span>
+  <h2>Herramientas por stack</h2>
+  <p>
+    La madurez de esta práctica <strong>no es pareja entre ecosistemas</strong> — vale la pena decirlo
+    explícitamente en vez de fingir que los cuatro stacks están igual de bien servidos.
+  </p>
+
+  <h3 style="color: var(--text); font-size: 1rem; margin: 1.5rem 0 0.5rem;">Python — pip-audit</h3>
+  <div class="code-block">
+    <div class="code-block-label">bash</div>
+    <pre>$ pip-audit
+<span class="cm"># Found 1 known vulnerability in 1 package
+# Name     Version  ID                  Fix Versions
+# -------- -------- ------------------- ------------
+# requests 2.25.1   GHSA-j8r2-6x86-q33q 2.31.0</span></pre>
+  </div>
+
+  <h3 style="color: var(--text); font-size: 1rem; margin: 1.5rem 0 0.5rem;">Java/Spring Boot — OWASP Dependency-Check</h3>
+  <div class="code-block">
+    <div class="code-block-label">bash — Maven</div>
+    <pre>$ mvn org.owasp:dependency-check-maven:check
+<span class="cm"># [WARN] jackson-databind-2.9.8.jar: CVE-2019-12384 (CVSS 8.1) — deserialización insegura</span>
+<span class="cm"># genera target/dependency-check-report.html con el detalle</span></pre>
+  </div>
+
+  <h3 style="color: var(--text); font-size: 1rem; margin: 1.5rem 0 0.5rem;">Flutter/Dart — Dependabot + dart pub outdated</h3>
+  <p>
+    El ecosistema pub no tiene todavía un escáner de CVEs dedicado tan establecido como los anteriores. La
+    combinación práctica es <strong>GitHub Dependabot</strong> (que sí entiende <code>pubspec.yaml</code> y
+    abre PRs automáticos cuando hay una versión con fix de seguridad) más una revisión manual periódica de
+    versiones desactualizadas:
+  </p>
+  <div class="code-block">
+    <div class="code-block-label">bash</div>
+    <pre>$ dart pub outdated
+<span class="cm"># Package Name  Current  Upgradable  Resolvable  Latest
+# http          0.13.3   0.13.6      0.13.6      1.2.2</span></pre>
+  </div>
+
+  <div class="callout warn">
+    <strong>El caso más honesto: C++.</strong> No existe un registro central de paquetes equivalente a
+    PyPI, npm o Maven Central, así que tampoco existe una base de datos de vulnerabilidades tan bien
+    conectada a las versiones exactas que usas. La práctica real en proyectos C++ serios es más manual:
+    revisar avisos de seguridad de las librerías que usas directamente (OpenSSL, Boost, etc.) y, si
+    empaquetas tu aplicación en un contenedor para el Módulo 5, escanear la <strong>imagen final</strong>
+    con una herramienta como <a href="https://trivy.dev/" target="_blank" rel="noopener">Trivy</a>, que sí
+    tiene buena cobertura de paquetes del sistema operativo instalados en la imagen.
+  </div>
+</section>
+
+<section class="demo-section" id="politica">
+  <span class="section-kicker">// cuando la alerta llega de verdad</span>
+  <h2>Qué hacer cuando aparece una vulnerabilidad</h2>
+  <p>Ninguna alerta de CVE se resuelve sola. El proceso, siempre en este orden:</p>
+  <ol style="margin: 0 0 1rem 1.25rem; color: var(--muted); line-height: 1.9;">
+    <li><strong style="color:var(--text)">¿Me afecta de verdad?</strong> Una vulnerabilidad en una función que nunca llamas tiene prioridad distinta a una en tu ruta crítica de autenticación.</li>
+    <li><strong style="color:var(--text)">¿Existe una versión con el fix?</strong> Si sí, actualizar y correr la suite completa de tests (Módulos 3-4) antes de hacer merge — un upgrade de dependencia es un cambio real, no un detalle administrativo.</li>
+    <li><strong style="color:var(--text)">Si no existe fix todavía</strong>, documenta la decisión como deuda técnica (Módulo 1) con un Issue explícito, igual que cualquier otro riesgo aceptado a propósito.</li>
+  </ol>
+  <div class="callout accent2">
+    Igual que en el Módulo 5, esto se vuelve un <strong>quality gate</strong> real cuando el scanner corre
+    dentro del pipeline de CI y bloquea el merge ante una vulnerabilidad crítica sin excepción manual —
+    no cuando alguien "se acuerda de revisarlo cada tanto".
+  </div>
+</section>
+
+<section class="demo-section" id="autoevaluacion">
+  <span class="section-kicker">// autoevaluación</span>
+  <h2>Autoevaluación</h2>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 1 de 5</span>
+    <p class="sc-question">Según el ejemplo de Log4Shell, ¿por qué muchos equipos afectados ni siquiera sabían que usaban la librería vulnerable?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Porque Log4j era una librería nueva y desconocida</button>
+      <button class="sc-option" data-correct="true">Porque era una dependencia transitiva, profunda en el árbol de paquetes, no una que ellos hubieran elegido directamente</button>
+      <button class="sc-option" data-correct="false">Porque el código fuente de Log4j era secreto</button>
+      <button class="sc-option" data-correct="false">Porque solo afectaba a proyectos sin pipeline de CI</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: las dependencias transitivas (las que tus dependencias directas traen consigo) son parte de
+      tu superficie de riesgo aunque nunca las hayas elegido ni leído — por eso el dependency scanning
+      examina el árbol completo, no solo tu <code>requirements.txt</code> de primer nivel.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 2 de 5</span>
+    <p class="sc-question">¿Cuál es la diferencia principal entre el análisis estático del Módulo 6 y el dependency scanning de esta página?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">No hay ninguna diferencia real, son la misma técnica</button>
+      <button class="sc-option" data-correct="true">El análisis estático examina tu propio código; el dependency scanning examina el código de terceros que declaraste como dependencia</button>
+      <button class="sc-option" data-correct="false">El dependency scanning solo funciona en Python</button>
+      <button class="sc-option" data-correct="false">El análisis estático reemplaza por completo al dependency scanning</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: son complementarios — uno protege la calidad de lo que tú escribiste, el otro protege
+      contra vulnerabilidades conocidas en lo que instalaste.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 3 de 5</span>
+    <p class="sc-question">Según esta página, ¿por qué el dependency scanning en C++ es distinto (y más manual) que en Python, Java o Flutter/Dart?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Porque C++ no tiene ninguna vulnerabilidad de seguridad conocida</button>
+      <button class="sc-option" data-correct="true">Porque no existe un registro central de paquetes tan conectado a una base de datos de CVEs como PyPI, Maven Central o el ecosistema pub</button>
+      <button class="sc-option" data-correct="false">Porque C++ no permite usar librerías de terceros</button>
+      <button class="sc-option" data-correct="false">Porque las herramientas de C++ son más caras que las de otros lenguajes</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: la fragmentación del ecosistema de paquetes de C++ (sin un registro central) hace que la
+      práctica real dependa más de revisión manual de avisos de seguridad y de escanear la imagen final
+      con herramientas como Trivy.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 4 de 5</span>
+    <p class="sc-question">Según el proceso descrito en esta página, si aparece una alerta de CVE pero todavía no existe una versión con el fix, ¿qué se debe hacer?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Ignorar la alerta hasta que exista un fix</button>
+      <button class="sc-option" data-correct="true">Documentar la decisión como deuda técnica explícita en un Issue, igual que cualquier otro riesgo aceptado a propósito</button>
+      <button class="sc-option" data-correct="false">Eliminar la dependencia inmediatamente sin evaluar el impacto</button>
+      <button class="sc-option" data-correct="false">Desactivar el pipeline de CI hasta que se resuelva</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: conecta directamente con la deuda técnica prudente-deliberada del Módulo 1 — el riesgo se
+      acepta a propósito, pero queda registrado y visible, no escondido.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 5 de 5</span>
+    <p class="sc-question">¿Qué hace que el dependency scanning se convierta en un verdadero quality gate, según el callout final de esta página?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Que un desarrollador revise manualmente los reportes una vez al mes</button>
+      <button class="sc-option" data-correct="true">Que corra dentro del pipeline de CI y bloquee el merge automáticamente ante una vulnerabilidad crítica</button>
+      <button class="sc-option" data-correct="false">Que se documente en el README del proyecto</button>
+      <button class="sc-option" data-correct="false">Que se use exclusivamente en el stack de Java</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: igual que los quality gates del Módulo 5, la protección real viene de que la herramienta
+      bloquee automáticamente, no de que alguien recuerde revisarlo periódicamente.
+    </div>
+  </div>
+</section>

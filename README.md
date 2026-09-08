@@ -4,7 +4,7 @@ Curso práctico de Ciencia de la Computación centrado en calidad de software y 
 
 Ver [`CLAUDE.md`](CLAUDE.md) para la estructura completa del curso, el modelo pedagógico (labs sobre un repo real, Python + C++ + Flutter/Dart + Java/Spring Boot en paralelo, evaluación por progreso de repositorio) y las instrucciones de desarrollo local.
 
-**Estado actual: Módulos 1-6 con contenido completo y enlazados. Módulos 7-8 y proyecto final en preparación.**
+**Estado actual: Módulos 1-8 con contenido completo y enlazados. Proyecto final en preparación.**
 
 ## Desarrollo local
 

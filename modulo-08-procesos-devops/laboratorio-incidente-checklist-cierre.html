@@ -1,0 +1,169 @@
+---
+layout: lab
+title: "Laboratorio: Simulación de Incidente y Checklist de Cierre"
+subtitle: "La mejor vez para practicar un postmortem es antes de necesitar uno de verdad."
+eyebrow: "Módulo 8 · Procesos, Cultura DevOps y Postmortems"
+module: 8
+module_title: "Procesos, Cultura DevOps y Postmortems"
+prev_url: "/modulo-08-procesos-devops/postmortems-sin-culpa.html"
+prev_title: "Simulación de incidente y postmortems sin culpa"
+---
+
+<nav class="demo-toc">
+  <a href="#laboratorio">Laboratorio: simula un incidente real en tu repo</a>
+  <a href="#checklist-cierre">Checklist de cierre — Módulo 8</a>
+  <a href="#checklist-curso">Antes del proyecto final: repaso rápido de los 8 módulos</a>
+  <a href="#autoevaluacion">Autoevaluación</a>
+</nav>
+
+<section class="demo-section" id="laboratorio">
+  <span class="section-kicker">// laboratorio</span>
+  <h2>Laboratorio: simula un incidente real en tu repo</h2>
+  <p>
+    No hace falta inventar un incidente artificial — casi todo proyecto de este curso ya tuvo al menos un
+    bug real en los Módulos 3-7. Vas a tratar uno de esos bugs reales como si fuera un incidente de
+    producción y escribir el postmortem correspondiente, aplicando la plantilla y los 5 porqués de la
+    página anterior.
+  </p>
+
+  <div class="checklist" data-key="laboratorio-postmortem">
+    <div class="checklist-header">
+      <span class="checklist-title">Pasos del laboratorio</span>
+      <span class="checklist-progress"></span>
+    </div>
+    <ul>
+      <li data-item="incidente-elegido"><input type="checkbox" id="l8-1" /><label for="l8-1">Elegiste un bug real de tu propio historial de commits/Issues (no inventado) para tratar como el incidente.</label></li>
+      <li data-item="linea-tiempo"><input type="checkbox" id="l8-2" /><label for="l8-2">Reconstruiste la línea de tiempo real usando <code>git log</code>, Issues y PRs — no memoria aproximada.</label></li>
+      <li data-item="cinco-porques-aplicado"><input type="checkbox" id="l8-3" /><label for="l8-3">Aplicaste los 5 porqués hasta llegar a una causa raíz accionable, no a "alguien se equivocó".</label></li>
+      <li data-item="postmortem-escrito"><input type="checkbox" id="l8-4" /><label for="l8-4">Escribiste el postmortem completo usando la plantilla de la página anterior, en el repo del proyecto.</label></li>
+      <li data-item="acciones-con-dueno"><input type="checkbox" id="l8-5" /><label for="l8-5">Cada acción de seguimiento tiene un Issue real abierto, no solo una línea en el documento.</label></li>
+      <li data-item="dod-actualizado"><input type="checkbox" id="l8-6" /><label for="l8-6">Si la causa raíz apunta a un hueco del Definition of Done, lo actualizaste explícitamente.</label></li>
+    </ul>
+  </div>
+</section>
+
+<section class="demo-section" id="checklist-cierre">
+  <span class="section-kicker">// cierre del módulo 8</span>
+  <h2>Checklist de entrega — Módulo 8</h2>
+  <div class="checklist" data-key="entrega-modulo-8">
+    <div class="checklist-header">
+      <span class="checklist-title">Módulo 8 — listo para revisión</span>
+      <span class="checklist-progress"></span>
+    </div>
+    <ul>
+      <li data-item="dod-documentado"><input type="checkbox" id="ec8-1" /><label for="ec8-1">Definition of Done del equipo documentada explícitamente en el repo (README o wiki).</label></li>
+      <li data-item="postmortem-real"><input type="checkbox" id="ec8-2" /><label for="ec8-2">Al menos un postmortem real, blameless, escrito sobre un incidente propio del proyecto.</label></li>
+      <li data-item="causa-raiz-identificada"><input type="checkbox" id="ec8-3" /><label for="ec8-3">El postmortem identifica una causa raíz accionable, no solo un síntoma superficial.</label></li>
+      <li data-item="issues-seguimiento"><input type="checkbox" id="ec8-4" /><label for="ec8-4">Issues de seguimiento abiertos y con dueño para cada acción del postmortem.</label></li>
+      <li data-item="pr-revisado-m8"><input type="checkbox" id="ec8-5" /><label for="ec8-5">El PR de esta entrega fue revisado por otra persona, siguiendo el flujo del Módulo 2.</label></li>
+    </ul>
+  </div>
+</section>
+
+<section class="demo-section" id="checklist-curso">
+  <span class="section-kicker">// mirando hacia atrás antes del proyecto final</span>
+  <h2>Antes del proyecto final: repaso rápido de los 8 módulos</h2>
+  <p>
+    El proyecto final no agrega una práctica nueva — integra todo lo que ya construiste, módulo a módulo,
+    en el mismo repositorio. Antes de empezarlo, vale la pena confirmar que cada capa sigue viva, no solo
+    que existió alguna vez:
+  </p>
+  <div class="checklist" data-key="repaso-pre-final">
+    <div class="checklist-header">
+      <span class="checklist-title">Capas de calidad que tu repo debería tener, todas funcionando hoy</span>
+      <span class="checklist-progress"></span>
+    </div>
+    <ul>
+      <li data-item="repaso-m1"><input type="checkbox" id="rp-1" /><label for="rp-1">Módulo 1 — Branch protection, plantillas, <code>.editorconfig</code> siguen activos.</label></li>
+      <li data-item="repaso-m2"><input type="checkbox" id="rp-2" /><label for="rp-2">Módulo 2 — El flujo de PR + revisión + CODEOWNERS se sigue usando en cada cambio.</label></li>
+      <li data-item="repaso-m3-4"><input type="checkbox" id="rp-3" /><label for="rp-3">Módulos 3-4 — La suite de tests (unitarios, integración, E2E) sigue en verde y creciendo.</label></li>
+      <li data-item="repaso-m5"><input type="checkbox" id="rp-4" /><label for="rp-4">Módulo 5 — El pipeline de CI sigue siendo un quality gate real, no decorativo.</label></li>
+      <li data-item="repaso-m6"><input type="checkbox" id="rp-5" /><label for="rp-5">Módulo 6 — SonarCloud (u otro) sigue conectado, sin code smells bloqueantes acumulados.</label></li>
+      <li data-item="repaso-m7"><input type="checkbox" id="rp-6" /><label for="rp-6">Módulo 7 — Dependency scanning activo, logs estructurados, al menos un SLO documentado.</label></li>
+      <li data-item="repaso-m8"><input type="checkbox" id="rp-7" /><label for="rp-7">Módulo 8 — DoD escrita y protegida bajo presión, al menos un postmortem real archivado.</label></li>
+    </ul>
+  </div>
+</section>
+
+<section class="demo-section" id="autoevaluacion">
+  <span class="section-kicker">// autoevaluación</span>
+  <h2>Autoevaluación</h2>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 1 de 5</span>
+    <p class="sc-question">¿Por qué el laboratorio de esta página pide usar un bug real del propio historial del proyecto en vez de inventar un incidente ficticio?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Porque inventar un incidente está prohibido por las reglas del curso</button>
+      <button class="sc-option" data-correct="true">Porque practicar sobre datos reales (commits, Issues, línea de tiempo real) entrena la habilidad real de reconstruir un incidente con evidencia, no con memoria aproximada</button>
+      <button class="sc-option" data-correct="false">Porque los incidentes ficticios no pueden tener causa raíz</button>
+      <button class="sc-option" data-correct="false">Porque no hay suficientes bugs reales en ningún proyecto de este curso</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: la habilidad que se practica es reconstruir qué pasó con evidencia real (Módulo 7: logs,
+      Módulo 2: historial de PRs) — un incidente inventado no ejercita esa reconstrucción real.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 2 de 5</span>
+    <p class="sc-question">Según el checklist del laboratorio, ¿qué diferencia hay entre una acción de seguimiento "en el documento" y una "con Issue real abierto"?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">No hay ninguna diferencia práctica entre ambas</button>
+      <button class="sc-option" data-correct="true">El Issue real hace que la acción sea rastreable y asignable como cualquier otro trabajo del equipo, en vez de quedar solo como una intención escrita</button>
+      <button class="sc-option" data-correct="false">El Issue real es obligatorio solo para incidentes de severidad baja</button>
+      <button class="sc-option" data-correct="false">Un documento de postmortem no puede mencionar Issues</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: sin un Issue real, la acción de seguimiento depende de que alguien recuerde volver a leer
+      el documento — con un Issue, entra al mismo flujo de trabajo rastreable que cualquier tarea del
+      equipo (Módulo 1).
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 3 de 5</span>
+    <p class="sc-question">Según esta página, ¿qué relación tiene el proyecto final con los 8 módulos del curso?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Es una práctica completamente nueva y desconectada de los módulos anteriores</button>
+      <button class="sc-option" data-correct="true">Integra todo lo ya construido módulo a módulo en el mismo repositorio, sin agregar una práctica nueva</button>
+      <button class="sc-option" data-correct="false">Reemplaza la necesidad de haber completado los módulos anteriores</button>
+      <button class="sc-option" data-correct="false">Solo evalúa lo aprendido en el Módulo 8</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: como se indica en esta página, el proyecto final es integración de las capas ya
+      construidas — por eso el repaso de esta página verifica que cada capa siga viva, no que exista una
+      capa nueva.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 4 de 5</span>
+    <p class="sc-question">El repaso pre-final de esta página pide confirmar que SonarCloud "sigue conectado, sin code smells bloqueantes acumulados". ¿A qué módulo corresponde directamente ese ítem?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Módulo 2 (Git/GitHub)</button>
+      <button class="sc-option" data-correct="false">Módulo 5 (CI/CD)</button>
+      <button class="sc-option" data-correct="true">Módulo 6 (Análisis Estático, Métricas y Refactorización)</button>
+      <button class="sc-option" data-correct="false">Módulo 8 (Procesos y Postmortems)</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: SonarCloud, el quality gate cross-language y los code smells son el contenido central del
+      Módulo 6 — el repaso simplemente verifica que esa capa siga activa antes del proyecto final.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 5 de 5</span>
+    <p class="sc-question">Según el checklist de cierre del Módulo 8, ¿qué distingue a un postmortem que cumple la rúbrica de uno que no?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Que esté escrito en un documento de más de 3 páginas</button>
+      <button class="sc-option" data-correct="true">Que identifique una causa raíz accionable (no solo un síntoma) y tenga Issues de seguimiento con dueño</button>
+      <button class="sc-option" data-correct="false">Que mencione explícitamente el nombre de quién causó el incidente</button>
+      <button class="sc-option" data-correct="false">Que se escriba antes de que el incidente termine de resolverse</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: la rúbrica pide exactamente lo que distingue un postmortem útil de uno decorativo — causa
+      raíz real (Módulo 8, página de los 5 porqués) y acciones rastreables con dueño, no un registro sin
+      consecuencias.
+    </div>
+  </div>
+</section>
