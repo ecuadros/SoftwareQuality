@@ -1,6 +1,6 @@
 ---
 layout: lab
-title: "Linters y Analizadores en los Tres Stacks"
+title: "Linters y Analizadores en los Cuatro Stacks"
 subtitle: "Cada ecosistema tiene su propia herramienta — pero todas responden la misma pregunta: ¿este código esconde un riesgo?"
 eyebrow: "Módulo 6 · Análisis Estático, Métricas y Refactorización"
 module: 6
@@ -15,12 +15,13 @@ next_title: "SonarCloud, refactorización y laboratorio"
   <a href="#python-linters">Python — pylint y mypy</a>
   <a href="#cpp-linters">C++ — clang-tidy y cppcheck</a>
   <a href="#flutter-linters">Flutter/Dart — dart analyze y very_good_analysis</a>
+  <a href="#java-linters">Java/Spring Boot — Checkstyle, PMD y SpotBugs</a>
   <a href="#comparacion-linters">Lo que cada uno atrapa mejor</a>
   <a href="#autoevaluacion">Autoevaluación</a>
 </nav>
 
 <section class="demo-section" id="python-linters">
-  <span class="section-kicker">// stack 1 de 3</span>
+  <span class="section-kicker">// stack 1 de 4</span>
   <h2>Python — pylint y mypy</h2>
   <p>
     Python es de tipado dinámico, así que dos herramientas cubren riesgos distintos: <code>pylint</code>
@@ -53,7 +54,7 @@ $ mypy validador.py
 </section>
 
 <section class="demo-section" id="cpp-linters">
-  <span class="section-kicker">// stack 2 de 3</span>
+  <span class="section-kicker">// stack 2 de 4</span>
   <h2>C++ — clang-tidy y cppcheck</h2>
   <p>
     En C++, el análisis estático hace un trabajo extra crítico: detectar patrones que llevan a
@@ -78,14 +79,14 @@ $ cppcheck --enable=warning,performance validador.cpp
 <span class="cm"># (warning) Possible null pointer dereference: ptr</span></pre>
   </div>
   <div class="callout warn">
-    Estas herramientas atrapan una clase de bug que <strong>no existe</strong> en Python ni en Dart
-    (ambos con recolector de basura y sin punteros crudos): memoria liberada dos veces, uso de memoria no
-    inicializada, punteros que apuntan a algo que ya no existe.
+    Estas herramientas atrapan una clase de bug que <strong>no existe</strong> en Python, Dart ni Java
+    (los tres con recolector de basura y sin punteros crudos): memoria liberada dos veces, uso de memoria
+    no inicializada, punteros que apuntan a algo que ya no existe.
   </div>
 </section>
 
 <section class="demo-section" id="flutter-linters">
-  <span class="section-kicker">// stack 3 de 3</span>
+  <span class="section-kicker">// stack 3 de 4</span>
   <h2>Flutter/Dart — dart analyze y very_good_analysis</h2>
   <p>
     Dart trae su analizador integrado (<code>dart analyze</code>); <code>very_good_analysis</code> es un
@@ -115,23 +116,63 @@ linter:
   </div>
 </section>
 
+<section class="demo-section" id="java-linters">
+  <span class="section-kicker">// stack 4 de 4</span>
+  <h2>Java/Spring Boot — Checkstyle, PMD y SpotBugs</h2>
+  <p>
+    Java divide el trabajo entre tres herramientas con roles distintos: <code>Checkstyle</code> vigila
+    estilo y convenciones; <code>PMD</code> detecta code smells de diseño; <code>SpotBugs</code> analiza el
+    <em>bytecode ya compilado</em> en busca de patrones de bugs reales — null pointers probables, recursos
+    sin cerrar, comparaciones de tipos incorrectas.
+  </p>
+  <div class="code-block">
+    <div class="code-block-label">checkstyle.xml — fragmento</div>
+    <pre>&lt;module name="Checker"&gt;
+  &lt;module name="TreeWalker"&gt;
+    &lt;module name="CyclomaticComplexity"&gt;
+      &lt;property name="max" value="12"/&gt;
+    &lt;/module&gt;
+    &lt;module name="UnusedImports"/&gt;
+  &lt;/module&gt;
+&lt;/module&gt;</pre>
+  </div>
+  <div class="code-block">
+    <div class="code-block-label">bash — Maven</div>
+    <pre>$ mvn checkstyle:check
+<span class="cm"># [WARN] Validador.java:14: Cyclomatic Complexity is 13 (max allowed is 12).</span>
+
+$ mvn pmd:check
+<span class="cm"># PMD: Avoid unused private fields such as 'servicioFiltradas'.</span>
+
+$ mvn spotbugs:check
+<span class="cm"># NP: Possible null pointer dereference in Validador.esValida(String)</span></pre>
+  </div>
+  <div class="callout warn">
+    A diferencia de los otros tres analizadores de este módulo, <strong>SpotBugs analiza bytecode ya
+    compilado</strong>, no el código fuente. Eso le permite atrapar patrones que dependen de cómo el
+    compilador realmente traduce el código — a costa de necesitar un build previo antes de poder analizar
+    nada, algo que Checkstyle y PMD no requieren.
+  </div>
+</section>
+
 <section class="demo-section" id="comparacion-linters">
   <span class="section-kicker">// resumen</span>
   <h2>Lo que cada uno atrapa mejor</h2>
   <div class="worked-example">
     <table class="worked-table">
       <thead>
-        <tr><th>Stack</th><th>Herramientas</th><th>Riesgo que atrapan mejor que los otros dos</th></tr>
+        <tr><th>Stack</th><th>Herramientas</th><th>Riesgo que atrapan mejor que los demás</th></tr>
       </thead>
       <tbody>
         <tr><td><strong>Python</strong></td><td>pylint + mypy</td><td>Errores de tipo que el intérprete dinámico no detectaría hasta ejecución.</td></tr>
-        <tr><td><strong>C++</strong></td><td>clang-tidy + cppcheck</td><td>Undefined behavior de memoria — categoría de bug que no existe en los otros dos stacks.</td></tr>
+        <tr><td><strong>C++</strong></td><td>clang-tidy + cppcheck</td><td>Undefined behavior de memoria — categoría de bug que no existe en los otros tres stacks.</td></tr>
         <tr><td><strong>Flutter/Dart</strong></td><td>dart analyze + very_good_analysis</td><td>Consistencia de estilo y patrones idiomáticos de widgets a escala de equipo grande.</td></tr>
+        <tr><td><strong>Java/Spring Boot</strong></td><td>Checkstyle + PMD + SpotBugs</td><td>Patrones de bug detectables solo en bytecode compilado (SpotBugs), además de estilo y diseño en el código fuente.</td></tr>
       </tbody>
     </table>
   </div>
   <p>
-    Los tres, sin embargo, comparten la misma capacidad de detectar <strong>code smells genéricos</strong>
+    Los cuatro, sin embargo, comparten la misma capacidad de detectar <strong>code smells genéricos</strong>
     (funciones largas, alta complejidad ciclomática, código duplicado) vistos en la página anterior — esa
     parte del catálogo es transferible entre lenguajes, aunque la sintaxis de configuración no lo sea.
   </p>
@@ -142,7 +183,7 @@ linter:
   <h2>Autoevaluación</h2>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 1 de 5</span>
+    <span class="section-kicker">Pregunta 1 de 6</span>
     <p class="sc-question">¿Qué detecta específicamente <code>mypy</code> que <code>pylint</code> no está diseñado para detectar?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Código duplicado</button>
@@ -157,8 +198,8 @@ linter:
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 2 de 5</span>
-    <p class="sc-question">Según esta página, ¿qué categoría de bug atrapan clang-tidy y cppcheck en C++ que simplemente no existe como riesgo en Python o Dart?</p>
+    <span class="section-kicker">Pregunta 2 de 6</span>
+    <p class="sc-question">Según esta página, ¿qué categoría de bug atrapan clang-tidy y cppcheck en C++ que simplemente no existe como riesgo en Python, Dart ni Java?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Nombres de variable poco descriptivos</button>
       <button class="sc-option" data-correct="true">Undefined behavior relacionado con memoria: uso de memoria no inicializada, punteros colgantes, doble liberación</button>
@@ -166,13 +207,14 @@ linter:
       <button class="sc-option" data-correct="false">Errores de indentación</button>
     </div>
     <div class="sc-rationale">
-      Correcto: Python y Dart usan recolector de basura y no exponen punteros crudos al programador, así
-      que esa categoría específica de riesgo de memoria simplemente no aplica ahí.
+      Correcto: Python, Dart y Java corren sobre un runtime con recolector de basura y no exponen punteros
+      crudos al programador, así que esa categoría específica de riesgo de memoria simplemente no aplica
+      ahí.
     </div>
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 3 de 5</span>
+    <span class="section-kicker">Pregunta 3 de 6</span>
     <p class="sc-question">¿Qué es <code>very_good_analysis</code> en el contexto de un proyecto Flutter?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Un framework alternativo a Flutter para construir UI</button>
@@ -187,22 +229,22 @@ linter:
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 4 de 5</span>
-    <p class="sc-question">Según la tabla de comparación, ¿qué tipo de análisis SÍ comparten los tres stacks, a pesar de usar herramientas distintas?</p>
+    <span class="section-kicker">Pregunta 4 de 6</span>
+    <p class="sc-question">Según la tabla de comparación, ¿qué tipo de análisis SÍ comparten los cuatro stacks, a pesar de usar herramientas distintas?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Detección de undefined behavior de memoria</button>
       <button class="sc-option" data-correct="true">Detección de code smells genéricos: funciones largas, alta complejidad ciclomática, código duplicado</button>
-      <button class="sc-option" data-correct="false">Verificación de tipos estáticos idéntica en los tres</button>
+      <button class="sc-option" data-correct="false">Verificación de tipos estáticos idéntica en los cuatro</button>
       <button class="sc-option" data-correct="false">Ninguno — cada stack detecta cosas completamente distintas</button>
     </div>
     <div class="sc-rationale">
       Correcto: aunque la sintaxis de configuración cambia, el catálogo de code smells genéricos visto en
-      la página anterior es transferible y las tres familias de herramientas lo cubren de alguna forma.
+      la página anterior es transferible y las cuatro familias de herramientas lo cubren de alguna forma.
     </div>
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 5 de 5</span>
+    <span class="section-kicker">Pregunta 5 de 6</span>
     <p class="sc-question">En el ejemplo de <code>.pylintrc</code> mostrado, ¿qué relación tiene <code>max-branches=12</code> con el contenido de la página anterior del módulo?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Ninguna, son conceptos completamente independientes</button>
@@ -214,6 +256,22 @@ linter:
       Correcto: cada rama (<code>if</code>, <code>for</code>, etc.) suma a la complejidad ciclomática vista
       en la página anterior; limitar <code>max-branches</code> es una forma directa de que el linter avise
       cuando esa métrica se sale de un rango razonable.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 6 de 6</span>
+    <p class="sc-question">¿Qué hace distinto a SpotBugs de Checkstyle, PMD, y de los analizadores de los otros tres stacks vistos en esta página?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Solo funciona dentro de proyectos Spring Boot, no en Java puro</button>
+      <button class="sc-option" data-correct="true">Analiza el bytecode ya compilado en vez del código fuente, por lo que necesita un build previo</button>
+      <button class="sc-option" data-correct="false">No puede integrarse a un pipeline de CI</button>
+      <button class="sc-option" data-correct="false">Detecta exclusivamente errores de formato e indentación</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: a diferencia de Checkstyle y PMD (que analizan el código fuente) y del resto de linters de
+      esta página, SpotBugs opera sobre el <code>.class</code> compilado — eso le permite ver patrones que
+      dependen de cómo el compilador tradujo el código, a costa de necesitar compilar primero.
     </div>
   </div>
 </section>

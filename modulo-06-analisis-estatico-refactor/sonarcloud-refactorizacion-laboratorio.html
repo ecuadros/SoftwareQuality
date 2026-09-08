@@ -6,7 +6,7 @@ eyebrow: "Módulo 6 · Análisis Estático, Métricas y Refactorización"
 module: 6
 module_title: "Análisis Estático, Métricas y Refactorización"
 prev_url: "/modulo-06-analisis-estatico-refactor/linters-tres-stacks.html"
-prev_title: "Linters y analizadores en los tres stacks"
+prev_title: "Linters y analizadores en los cuatro stacks"
 ---
 
 <nav class="demo-toc">
@@ -19,13 +19,13 @@ prev_title: "Linters y analizadores en los tres stacks"
 </nav>
 
 <section class="demo-section" id="sonarcloud">
-  <span class="section-kicker">// un panel único para los tres stacks</span>
+  <span class="section-kicker">// un panel único para los cuatro stacks</span>
   <h2>SonarCloud: un quality gate cross-language</h2>
   <p>
     Los linters del Módulo 6 (página anterior) corren por stack, dentro del pipeline de CI (Módulo 5).
     <a href="https://sonarcloud.io/" target="_blank" rel="noopener">SonarCloud</a> agrega una capa encima:
     un único dashboard que combina resultados de análisis estático, cobertura de tests y el índice SQALE
-    de deuda técnica (Módulo 1) — sin importar si el repo es Python, C++ o Flutter/Dart.
+    de deuda técnica (Módulo 1) — sin importar si el repo es Python, C++, Flutter/Dart o Java/Spring Boot.
   </p>
   <div class="code-block">
     <div class="code-block-label">.github/workflows/ci.yml — paso agregado al pipeline del Módulo 5</div>
@@ -106,7 +106,10 @@ $ mutmut run
 $ mull-runner ./build/tests
 
 <span class="cm"># Flutter/Dart</span>
-$ dart run mutation_test</pre>
+$ dart run mutation_test
+
+<span class="cm"># Java/Spring Boot</span>
+$ mvn org.pitest:pitest-maven:mutationCoverage</pre>
   </div>
   <p>
     Es una técnica costosa en tiempo de cómputo (corre la suite completa una vez por mutante), así que se
@@ -156,7 +159,7 @@ $ dart run mutation_test</pre>
   <h2>Autoevaluación</h2>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 1 de 5</span>
+    <span class="section-kicker">Pregunta 1 de 6</span>
     <p class="sc-question">¿Qué agrega SonarCloud sobre lo que ya hacen los linters de cada stack corriendo en CI?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Reemplaza completamente a los linters, ya no hacen falta</button>
@@ -171,7 +174,7 @@ $ dart run mutation_test</pre>
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 2 de 5</span>
+    <span class="section-kicker">Pregunta 2 de 6</span>
     <p class="sc-question">¿Qué significa la regla "Clean as You Code" de SonarCloud mencionada en esta página?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Que todo el código histórico del repo debe limpiarse antes del primer PR</button>
@@ -186,7 +189,7 @@ $ dart run mutation_test</pre>
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 3 de 5</span>
+    <span class="section-kicker">Pregunta 3 de 6</span>
     <p class="sc-question">Según el catálogo de refactorización de esta página, ¿qué técnica corresponde al code smell "God Class"?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Replace Magic Number with Named Constant</button>
@@ -201,7 +204,7 @@ $ dart run mutation_test</pre>
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 4 de 5</span>
+    <span class="section-kicker">Pregunta 4 de 6</span>
     <p class="sc-question">En mutation testing, ¿qué significa que un "mutante" haya sobrevivido a la suite de tests?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Que el código mutado no compiló</button>
@@ -216,7 +219,7 @@ $ dart run mutation_test</pre>
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 5 de 5</span>
+    <span class="section-kicker">Pregunta 5 de 6</span>
     <p class="sc-question">Según la "regla de oro" de esta página, ¿qué debe existir antes de empezar a refactorizar un code smell detectado?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Una aprobación por escrito del profesor del curso</button>
@@ -228,6 +231,22 @@ $ dart run mutation_test</pre>
       Correcto: refactorizar sin tests que confirmen que el comportamiento no cambió no es refactorizar,
       es reescribir a ciegas — la red de seguridad de tests (Módulo 3) es lo que hace segura la mejora de
       diseño.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 6 de 6</span>
+    <p class="sc-question">¿Qué herramienta de mutation testing corresponde al stack Java/Spring Boot según esta página, y cómo se invoca?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false"><code>mutmut run</code></button>
+      <button class="sc-option" data-correct="false"><code>mull-runner ./build/tests</code></button>
+      <button class="sc-option" data-correct="true">PIT, vía <code>mvn org.pitest:pitest-maven:mutationCoverage</code></button>
+      <button class="sc-option" data-correct="false"><code>dart run mutation_test</code></button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: PIT (pitest) es la herramienta de mutation testing del ecosistema Java, invocada como
+      plugin de Maven — mismo principio que <code>mutmut</code> en Python o <code>mull</code> en C++, solo
+      que integrada al mismo <code>mvn</code> que ya usas para test, cobertura y análisis estático.
     </div>
   </div>
 </section>

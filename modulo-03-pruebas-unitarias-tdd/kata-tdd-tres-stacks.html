@@ -1,7 +1,7 @@
 ---
 layout: lab
-title: "Kata TDD en los Tres Stacks: Python, C++ y Flutter/Dart"
-subtitle: "La misma feature, el mismo ciclo Red-Green-Refactor, tres ecosistemas — para ver qué cambia y qué no."
+title: "Kata TDD en los Cuatro Stacks: Python, C++, Flutter/Dart y Java/Spring Boot"
+subtitle: "La misma feature, el mismo ciclo Red-Green-Refactor, cuatro ecosistemas — para ver qué cambia y qué no."
 eyebrow: "Módulo 3 · Pruebas Unitarias y TDD"
 module: 3
 module_title: "Pruebas Unitarias y TDD"
@@ -16,6 +16,7 @@ next_title: "Cobertura, mocks y laboratorio"
   <a href="#python">Python — pytest</a>
   <a href="#cpp">C++ — GoogleTest</a>
   <a href="#flutter">Flutter/Dart — flutter_test</a>
+  <a href="#java">Java/Spring Boot — JUnit 5</a>
   <a href="#comparacion">Lo que cambia y lo que no cambia</a>
   <a href="#autoevaluacion">Autoevaluación</a>
 </nav>
@@ -24,23 +25,24 @@ next_title: "Cobertura, mocks y laboratorio"
   <span class="section-kicker">// el ejercicio</span>
   <h2>La kata: un validador de contraseñas</h2>
   <p>
-    Vas a implementar la misma regla de negocio en Python, C++ y Flutter/Dart, siguiendo Red-Green-Refactor
-    en cada uno. La regla, deliberadamente simple para que el foco esté en el <em>proceso</em>, no en el
-    problema:
+    Vas a implementar la misma regla de negocio en Python, C++, Flutter/Dart y Java/Spring Boot, siguiendo
+    Red-Green-Refactor en cada uno. La regla, deliberadamente simple para que el foco esté en el
+    <em>proceso</em>, no en el problema:
   </p>
   <div class="callout">
     Una contraseña es válida si tiene <strong>al menos 8 caracteres</strong>, <strong>al menos un
     dígito</strong> y <strong>al menos una letra mayúscula</strong>.
   </div>
   <p>
-    Debajo se muestra el ciclo completo en Python (para ver las tres vueltas: Red, Green, Refactor), y
-    luego el resultado equivalente — test + implementación final — en C++ y Flutter/Dart. El proceso para
-    llegar ahí es idéntico en los tres: se muestra completo una vez para no repetir lo mismo tres veces.
+    Debajo se muestra el ciclo completo en Python (para ver las cuatro vueltas: Red, Green, Refactor), y
+    luego el resultado equivalente — test + implementación final — en C++, Flutter/Dart y Java/Spring
+    Boot. El proceso para llegar ahí es idéntico en los cuatro: se muestra completo una vez para no repetir
+    lo mismo cuatro veces.
   </p>
 </section>
 
 <section class="demo-section" id="python">
-  <span class="section-kicker">// stack 1 de 3</span>
+  <span class="section-kicker">// stack 1 de 4</span>
   <h2>Python — pytest</h2>
 
   <p><strong>🔴 Red:</strong> se escribe el primer test, para la regla más simple (longitud), y se corre para verlo fallar.</p>
@@ -96,7 +98,7 @@ def es_valida(password: str) -> bool:
 </section>
 
 <section class="demo-section" id="cpp">
-  <span class="section-kicker">// stack 2 de 3</span>
+  <span class="section-kicker">// stack 2 de 4</span>
   <h2>C++ — GoogleTest</h2>
   <p>
     El ciclo es el mismo: se empieza por un test que falla al compilar (ni siquiera existe la función),
@@ -150,7 +152,7 @@ $ ctest --test-dir build --output-on-failure
 </section>
 
 <section class="demo-section" id="flutter">
-  <span class="section-kicker">// stack 3 de 3</span>
+  <span class="section-kicker">// stack 3 de 4</span>
   <h2>Flutter/Dart — flutter_test</h2>
   <p>
     Igual proceso: cuatro vueltas de Red-Green, mismas reglas, ahora en Dart puro (esta lógica no depende
@@ -196,28 +198,92 @@ void main() {
   </div>
 </section>
 
+<section class="demo-section" id="java">
+  <span class="section-kicker">// stack 4 de 4</span>
+  <h2>Java/Spring Boot — JUnit 5</h2>
+  <p>
+    Igual proceso: cuatro vueltas de Red-Green sobre las mismas reglas. Esta lógica es una clase Java
+    normal, sin ninguna anotación de Spring — no hace falta levantar el contexto de la aplicación para
+    probar una regla de validación pura.
+  </p>
+  <div class="code-block">
+    <div class="code-block-label">src/test/java/ValidadorTest.java</div>
+    <pre><span class="cm">import org.junit.jupiter.api.Test;</span>
+import static org.junit.jupiter.api.Assertions.*;
+
+class ValidadorTest {
+
+    @Test
+    void rechazaMenorA8Caracteres() {
+        assertFalse(Validador.esValida("Abc123"));
+    }
+
+    @Test
+    void rechazaSinDigito() {
+        assertFalse(Validador.esValida("Abcdefgh"));
+    }
+
+    @Test
+    void rechazaSinMayuscula() {
+        assertFalse(Validador.esValida("abc12345"));
+    }
+
+    @Test
+    void aceptaPasswordValida() {
+        assertTrue(Validador.esValida("Abcd1234"));
+    }
+}</pre>
+  </div>
+  <div class="code-block">
+    <div class="code-block-label">src/main/java/Validador.java — final (tras refactor)</div>
+    <pre>import java.util.regex.Pattern;
+
+public class Validador {
+
+    public static boolean esValida(String password) {
+        if (password.length() &lt; 8) return false;
+        return Pattern.compile("\\d").matcher(password).find()
+                &amp;&amp; Pattern.compile("[A-Z]").matcher(password).find();
+    }
+}</pre>
+  </div>
+  <div class="code-block">
+    <div class="code-block-label">bash — Maven</div>
+    <pre>$ mvn test
+<span class="cm"># Tests run: 4, Failures: 0, Errors: 0, Skipped: 0</span></pre>
+  </div>
+  <div class="callout warn">
+    <strong>Lo que Java comparte con C++, y lo que no:</strong> como C++, es un lenguaje de tipado estático
+    y compilado — si <code>Validador</code> no existiera todavía, el "Red" inicial sería un error de
+    compilación, igual que en C++. Pero a diferencia de C++, no hay gestión manual de memoria de por medio:
+    el riesgo dominante en Java/Spring Boot no es memoria, es la <strong>verbosidad</strong> y, en cuanto
+    el código usa componentes de Spring, el costo de levantar un contexto de inyección de dependencias solo
+    para probar algo simple.
+  </div>
+</section>
+
 <section class="demo-section" id="comparacion">
-  <span class="section-kicker">// el punto de hacerlo tres veces</span>
+  <span class="section-kicker">// el punto de hacerlo cuatro veces</span>
   <h2>Lo que cambia y lo que no cambia entre stacks</h2>
   <div class="worked-example">
     <table class="worked-table">
       <thead>
-        <tr><th></th><th>Python (pytest)</th><th>C++ (GoogleTest)</th><th>Flutter/Dart (flutter_test)</th></tr>
+        <tr><th></th><th>Python (pytest)</th><th>C++ (GoogleTest)</th><th>Flutter/Dart (flutter_test)</th><th>Java/Spring Boot (JUnit 5)</th></tr>
       </thead>
       <tbody>
-        <tr><td><strong>El ciclo Red-Green-Refactor</strong></td><td colspan="3" style="text-align:center;">Idéntico en los tres — esa es la parte que no cambia nunca.</td></tr>
-        <tr><td><strong>Qué significa "Red"</strong></td><td>Aserción fallida o <code>ImportError</code></td><td><strong>Puede ser error de compilación</strong>, no solo aserción</td><td>Aserción fallida (interpretado, sin paso de compilación)</td></tr>
-        <tr><td><strong>Velocidad del ciclo</strong></td><td>Muy rápida (interpretado)</td><td>Más lenta — cada vuelta puede requerir recompilar</td><td>Rápida con hot reload en desarrollo</td></tr>
-        <tr><td><strong>Riesgo dominante</strong></td><td>Tipado dinámico: un error de tipo solo aparece en tiempo de ejecución</td><td>Gestión manual de memoria y punteros — un test puede pasar y aun así haber undefined behavior (Módulo 7)</td><td>Acoplar la lógica de negocio a un widget en vez de aislarla (dificulta el test unitario)</td></tr>
-        <tr><td><strong>Corredor de tests</strong></td><td><code>pytest</code></td><td><code>ctest</code> (vía CMake)</td><td><code>flutter test</code></td></tr>
+        <tr><td><strong>El ciclo Red-Green-Refactor</strong></td><td colspan="4" style="text-align:center;">Idéntico en los cuatro — esa es la parte que no cambia nunca.</td></tr>
+        <tr><td><strong>Qué significa "Red"</strong></td><td>Aserción fallida o <code>ImportError</code></td><td><strong>Puede ser error de compilación</strong>, no solo aserción</td><td>Aserción fallida (interpretado, sin paso de compilación)</td><td>También puede ser error de compilación (tipado estático), sin gestión de memoria de por medio</td></tr>
+        <tr><td><strong>Velocidad del ciclo</strong></td><td>Muy rápida (interpretado)</td><td>Más lenta — cada vuelta puede requerir recompilar</td><td>Rápida con hot reload en desarrollo</td><td>Media — arranque de la JVM y compilación vía Maven/Gradle en cada corrida</td></tr>
+        <tr><td><strong>Riesgo dominante</strong></td><td>Tipado dinámico: un error de tipo solo aparece en tiempo de ejecución</td><td>Gestión manual de memoria y punteros — un test puede pasar y aun así haber undefined behavior (Módulo 7)</td><td>Acoplar la lógica de negocio a un widget en vez de aislarla (dificulta el test unitario)</td><td>Verbosidad/boilerplate, y sobrecarga de levantar el contexto de Spring para probar algo que no lo necesita</td></tr>
+        <tr><td><strong>Corredor de tests</strong></td><td><code>pytest</code></td><td><code>ctest</code> (vía CMake)</td><td><code>flutter test</code></td><td><code>mvn test</code> (JUnit 5 vía Surefire)</td></tr>
       </tbody>
     </table>
   </div>
   <p>
-    El objetivo de repetir la kata tres veces no es memorizar sintaxis — es notar que el <strong>proceso de
-    diseño guiado por tests</strong> es transferible entre lenguajes, mientras que los riesgos específicos
-    de cada ecosistema (tipado dinámico, memoria manual, acoplamiento a UI) requieren atención distinta en
-    cada uno.
+    El objetivo de repetir la kata cuatro veces no es memorizar sintaxis — es notar que el <strong>proceso
+    de diseño guiado por tests</strong> es transferible entre lenguajes, mientras que los riesgos
+    específicos de cada ecosistema (tipado dinámico, memoria manual, acoplamiento a UI, sobrecarga de
+    Spring) requieren atención distinta en cada uno.
   </p>
 </section>
 
@@ -226,7 +292,7 @@ void main() {
   <h2>Autoevaluación</h2>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 1 de 5</span>
+    <span class="section-kicker">Pregunta 1 de 6</span>
     <p class="sc-question">En la kata de esta página, ¿cuál fue la primera regla que se implementó, y por qué se empezó por ahí?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="true">La longitud mínima, porque era la regla más simple para arrancar el ciclo con la vuelta más corta posible</button>
@@ -241,7 +307,7 @@ void main() {
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 2 de 5</span>
+    <span class="section-kicker">Pregunta 2 de 6</span>
     <p class="sc-question">Según la tabla de comparación, ¿qué hace que el paso "Red" en C++ sea distinto al de Python y Flutter/Dart?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">En C++ no existe el concepto de test que falle</button>
@@ -257,7 +323,7 @@ void main() {
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 3 de 5</span>
+    <span class="section-kicker">Pregunta 3 de 6</span>
     <p class="sc-question">¿Qué cambió exactamente durante el paso "Refactor" en la versión de Python de la kata?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Se agregó una nueva regla de validación que antes no existía</button>
@@ -272,7 +338,7 @@ void main() {
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 4 de 5</span>
+    <span class="section-kicker">Pregunta 4 de 6</span>
     <p class="sc-question">¿Por qué el test de Flutter/Dart de esta página no necesitó usar <code>WidgetTester</code> ni montar ningún widget?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Porque Flutter no soporta pruebas de widgets</button>
@@ -288,7 +354,7 @@ void main() {
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 5 de 5</span>
+    <span class="section-kicker">Pregunta 5 de 6</span>
     <p class="sc-question">Según la tabla de comparación, ¿cuál es el riesgo dominante mencionado específicamente para el stack de C++ que no aparece igual en Python ni Flutter/Dart?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">El tipado dinámico</button>
@@ -300,6 +366,22 @@ void main() {
       Correcto: un test en verde en C++ no garantiza ausencia de undefined behavior (memoria mal manejada,
       punteros colgantes) — ese riesgo se ataca con sanitizers y Valgrind en el Módulo 7, no con tests
       unitarios solos.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 6 de 6</span>
+    <p class="sc-question">Según el callout de la sección de Java/Spring Boot, ¿qué comparte Java con C++ que no comparte con Python ni Flutter/Dart, y qué NO comparte?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Comparte la gestión manual de memoria, pero no el tipado estático</button>
+      <button class="sc-option" data-correct="true">Comparte ser un lenguaje de tipado estático y compilado (el "Red" inicial puede ser un error de compilación), pero no la gestión manual de memoria</button>
+      <button class="sc-option" data-correct="false">Comparte ambas cosas: tipado estático y gestión manual de memoria</button>
+      <button class="sc-option" data-correct="false">No comparte nada con C++, es idéntico a Python</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: como C++, Java es de tipado estático y compilado, así que un "Red" inicial también puede
+      ser un error de compilación. Pero Java no expone gestión manual de memoria ni punteros crudos — su
+      riesgo dominante es otro: verbosidad y la sobrecarga de levantar el contexto de Spring innecesariamente.
     </div>
   </div>
 </section>

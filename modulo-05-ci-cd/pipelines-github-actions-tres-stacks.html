@@ -1,6 +1,6 @@
 ---
 layout: lab
-title: "Pipelines de GitHub Actions en los Tres Stacks"
+title: "Pipelines de GitHub Actions en los Cuatro Stacks"
 subtitle: "Un archivo YAML por stack, la misma estructura conceptual: checkout, dependencias, build, test, gate."
 eyebrow: "Módulo 5 · Integración y Entrega Continua (CI/CD)"
 module: 5
@@ -16,7 +16,8 @@ next_title: "Versionado semántico, despliegue y laboratorio"
   <a href="#python-workflow">Python — pip + pytest</a>
   <a href="#cpp-workflow">C++ — CMake + CTest</a>
   <a href="#flutter-workflow">Flutter/Dart — flutter-action</a>
-  <a href="#comparacion-pipelines">Lo que cambia entre los tres pipelines</a>
+  <a href="#java-workflow">Java/Spring Boot — setup-java + Maven</a>
+  <a href="#comparacion-pipelines">Lo que cambia entre los cuatro pipelines</a>
   <a href="#autoevaluacion">Autoevaluación</a>
 </nav>
 
@@ -25,7 +26,7 @@ next_title: "Versionado semántico, despliegue y laboratorio"
   <h2>Anatomía de un workflow de GitHub Actions</h2>
   <p>
     Un archivo en <code>.github/workflows/*.yml</code> define cuándo correr (<code>on:</code>) y qué pasos
-    ejecutar (<code>jobs</code> → <code>steps</code>). Los tres pipelines de abajo comparten esta forma:
+    ejecutar (<code>jobs</code> → <code>steps</code>). Los cuatro pipelines de abajo comparten esta forma:
   </p>
   <div class="code-block">
     <div class="code-block-label">.github/workflows/ci.yml — esqueleto común</div>
@@ -47,7 +48,7 @@ jobs:
 </section>
 
 <section class="demo-section" id="python-workflow">
-  <span class="section-kicker">// stack 1 de 3</span>
+  <span class="section-kicker">// stack 1 de 4</span>
   <h2>Python — pip + pytest</h2>
   <div class="code-block">
     <div class="code-block-label">.github/workflows/ci.yml</div>
@@ -85,7 +86,7 @@ jobs:
 </section>
 
 <section class="demo-section" id="cpp-workflow">
-  <span class="section-kicker">// stack 2 de 3</span>
+  <span class="section-kicker">// stack 2 de 4</span>
   <h2>C++ — CMake + CTest</h2>
   <div class="code-block">
     <div class="code-block-label">.github/workflows/ci.yml</div>
@@ -126,7 +127,7 @@ jobs:
 </section>
 
 <section class="demo-section" id="flutter-workflow">
-  <span class="section-kicker">// stack 3 de 3</span>
+  <span class="section-kicker">// stack 3 de 4</span>
   <h2>Flutter/Dart — subosito/flutter-action</h2>
   <div class="code-block">
     <div class="code-block-label">.github/workflows/ci.yml</div>
@@ -168,26 +169,65 @@ jobs:
   </p>
 </section>
 
+<section class="demo-section" id="java-workflow">
+  <span class="section-kicker">// stack 4 de 4</span>
+  <h2>Java/Spring Boot — actions/setup-java + Maven</h2>
+  <div class="code-block">
+    <div class="code-block-label">.github/workflows/ci.yml</div>
+    <pre>name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+          cache: "maven"
+
+      - name: Compilar, tests unitarios y de integración
+        run: mvn -B verify
+
+      - name: Generar reporte de cobertura
+        run: mvn jacoco:report</pre>
+  </div>
+  <div class="callout">
+    <code>mvn verify</code> hace más que <code>mvn test</code>: además de compilar y correr los tests
+    unitarios (plugin Surefire), también corre las pruebas de integración con Testcontainers del Módulo 4
+    (plugin Failsafe) — incluyendo levantar el <code>MongoDBContainer</code> real. Eso funciona sin ningún
+    paso adicional de configuración porque los runners <code>ubuntu-latest</code> de GitHub Actions ya
+    traen Docker preinstalado.
+  </div>
+</section>
+
 <section class="demo-section" id="comparacion-pipelines">
   <span class="section-kicker">// resumen</span>
-  <h2>Lo que cambia entre los tres pipelines</h2>
+  <h2>Lo que cambia entre los cuatro pipelines</h2>
   <div class="worked-example">
     <table class="worked-table">
       <thead>
-        <tr><th></th><th>Python</th><th>C++</th><th>Flutter/Dart</th></tr>
+        <tr><th></th><th>Python</th><th>C++</th><th>Flutter/Dart</th><th>Java/Spring Boot</th></tr>
       </thead>
       <tbody>
-        <tr><td><strong>Action de setup</strong></td><td><code>actions/setup-python</code></td><td>Ninguna oficial — se instalan paquetes del sistema a mano</td><td><code>subosito/flutter-action</code></td></tr>
-        <tr><td><strong>Etapa de build separada</strong></td><td>No — es interpretado</td><td><strong>Sí</strong>, obligatoria antes de testear</td><td>No — el análisis y test corren directo sobre el código fuente</td></tr>
-        <tr><td><strong>Duración típica</strong></td><td>Rápida (1-2 min)</td><td>Más lenta (3-8 min) por la compilación</td><td>Rápida-media (2-4 min)</td></tr>
-        <tr><td><strong>Cacheable</strong></td><td>Paquetes pip</td><td>Artefactos de compilación (ccache)</td><td>Paquetes pub y SDK de Flutter</td></tr>
+        <tr><td><strong>Action de setup</strong></td><td><code>actions/setup-python</code></td><td>Ninguna oficial — se instalan paquetes del sistema a mano</td><td><code>subosito/flutter-action</code></td><td><code>actions/setup-java</code></td></tr>
+        <tr><td><strong>Etapa de build separada</strong></td><td>No — es interpretado</td><td><strong>Sí</strong>, obligatoria antes de testear</td><td>No — el análisis y test corren directo sobre el código fuente</td><td>Implícita — <code>mvn verify</code> compila como parte del mismo comando, pero un error de compilación igual falla el step</td></tr>
+        <tr><td><strong>Duración típica</strong></td><td>Rápida (1-2 min)</td><td>Más lenta (3-8 min) por la compilación</td><td>Rápida-media (2-4 min)</td><td>Media (3-6 min) — JVM + Maven + arranque del contenedor de Testcontainers</td></tr>
+        <tr><td><strong>Cacheable</strong></td><td>Paquetes pip</td><td>Artefactos de compilación (ccache)</td><td>Paquetes pub y SDK de Flutter</td><td>Dependencias de Maven (<code>~/.m2</code>) vía <code>cache: "maven"</code></td></tr>
       </tbody>
     </table>
   </div>
   <div class="callout accent2">
-    En un proyecto que usa los tres stacks en paralelo (poco común, pero posible como ejercicio de este
+    En un proyecto que usa los cuatro stacks en paralelo (poco común, pero posible como ejercicio de este
     curso), cada uno vive en su propio archivo de workflow — no se fuerza un solo pipeline "universal" que
-    termine siendo peor para los tres.
+    termine siendo peor para los cuatro.
   </div>
 </section>
 
@@ -196,8 +236,8 @@ jobs:
   <h2>Autoevaluación</h2>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 1 de 5</span>
-    <p class="sc-question">¿Qué evento dispara los tres workflows mostrados en esta página?</p>
+    <span class="section-kicker">Pregunta 1 de 6</span>
+    <p class="sc-question">¿Qué evento dispara los cuatro workflows mostrados en esta página?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Solo un push directo a cualquier rama</button>
       <button class="sc-option" data-correct="true">Un push a <code>main</code> y la apertura o actualización de cualquier Pull Request</button>
@@ -211,7 +251,7 @@ jobs:
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 2 de 5</span>
+    <span class="section-kicker">Pregunta 2 de 6</span>
     <p class="sc-question">Según esta página, ¿qué etapa tiene el pipeline de C++ que no aparece como paso separado en Python ni en Flutter/Dart?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Instalar dependencias</button>
@@ -226,7 +266,7 @@ jobs:
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 3 de 5</span>
+    <span class="section-kicker">Pregunta 3 de 6</span>
     <p class="sc-question">En el workflow de Flutter/Dart mostrado, ¿qué action se usa específicamente para instalar el SDK de Flutter en el runner?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false"><code>actions/setup-python</code></button>
@@ -241,7 +281,7 @@ jobs:
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 4 de 5</span>
+    <span class="section-kicker">Pregunta 4 de 6</span>
     <p class="sc-question">¿Por qué en el pipeline de Flutter/Dart, <code>flutter analyze</code> corre como parte del mismo gate que los tests, en vez de ser un paso "opcional" aparte?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Porque flutter analyze no puede fallar nunca</button>
@@ -257,7 +297,7 @@ jobs:
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 5 de 5</span>
+    <span class="section-kicker">Pregunta 5 de 6</span>
     <p class="sc-question">Según la tabla de comparación, ¿por qué el pipeline de C++ suele tardar más en total que el de Python?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Porque GoogleTest es más lento que pytest para correr el mismo número de tests</button>
@@ -268,6 +308,22 @@ jobs:
     <div class="sc-rationale">
       Correcto: la etapa de build agrega tiempo real de compilación al pipeline, algo que los lenguajes
       interpretados (Python, Dart) no necesitan pagar en cada corrida.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 6 de 6</span>
+    <p class="sc-question">El workflow de Java ejecuta pruebas de integración con Testcontainers que levantan un <code>MongoDBContainer</code> real. Según esta página, ¿qué hace posible que eso funcione sin ningún paso adicional de configuración en el runner?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">GitHub Actions instala MongoDB automáticamente cuando detecta un proyecto Java</button>
+      <button class="sc-option" data-correct="true">Los runners <code>ubuntu-latest</code> ya traen Docker preinstalado, y Testcontainers lo usa para levantar el contenedor</button>
+      <button class="sc-option" data-correct="false"><code>mvn verify</code> se salta las pruebas de integración en CI por defecto</button>
+      <button class="sc-option" data-correct="false">Es necesario, pero esta página omitió ese paso por error</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: Testcontainers necesita un daemon de Docker disponible para levantar contenedores efímeros;
+      los runners estándar de GitHub Actions ya lo incluyen, así que <code>mvn verify</code> puede correr
+      las pruebas de integración del Módulo 4 sin instalar nada extra.
     </div>
   </div>
 </section>

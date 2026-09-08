@@ -6,7 +6,7 @@ eyebrow: "Módulo 3 · Pruebas Unitarias y TDD"
 module: 3
 module_title: "Pruebas Unitarias y TDD"
 prev_url: "/modulo-03-pruebas-unitarias-tdd/kata-tdd-tres-stacks.html"
-prev_title: "Kata TDD en los tres stacks"
+prev_title: "Kata TDD en los cuatro stacks"
 next_url: "/modulo-04-integracion-e2e-bdd/pruebas-integracion-contract-testing.html"
 next_title: "Pruebas de integración y contract testing"
 ---
@@ -78,10 +78,18 @@ $ genhtml coverage.info --output-directory coverage-html</pre>
 $ genhtml coverage/lcov.info -o coverage/html</pre>
   </div>
 
+  <div class="code-block">
+    <div class="code-block-label">bash — Java/Spring Boot (JaCoCo vía Maven)</div>
+    <pre>$ mvn test jacoco:report
+<span class="cm"># genera target/site/jacoco/index.html navegable</span></pre>
+  </div>
+
   <p>
-    Los tres terminan en el mismo formato <code>lcov</code> reportable como HTML — conveniente porque en el
-    <strong>Módulo 5</strong> vas a subir ese mismo reporte como artefacto de CI, y en el
-    <strong>Módulo 6</strong> vas a integrarlo a SonarCloud como parte del quality gate.
+    Python, C++ y Flutter/Dart terminan en el mismo formato <code>lcov</code> reportable como HTML —
+    conveniente porque en el <strong>Módulo 5</strong> vas a subir ese mismo reporte como artefacto de CI.
+    JaCoCo usa su propio formato nativo (XML/HTML) en vez de <code>lcov</code>, pero en el
+    <strong>Módulo 6</strong> vas a integrar cualquiera de los dos formatos a SonarCloud como parte del
+    quality gate — ambos son de primera clase ahí, no hace falta convertir uno al otro.
   </p>
 </section>
 
@@ -108,7 +116,7 @@ def test_rechaza_password_filtrada():
     servicio_filtradas.esta_filtrada.assert_called_once_with("Abcd1234")</pre>
   </div>
   <p>
-    El equivalente conceptual existe en los otros dos stacks, con librerías dedicadas — no se repite el
+    El equivalente conceptual existe en los otros tres stacks, con librerías dedicadas — no se repite el
     código completo aquí porque la idea (reemplazar la dependencia real por un doble controlado) es
     exactamente la misma que en el ejemplo de Python:
   </p>
@@ -121,8 +129,14 @@ def test_rechaza_password_filtrada():
         <tr><td><strong>Python</strong></td><td><code>unittest.mock</code> / <code>pytest-mock</code></td><td><code>mock.esta_filtrada.return_value = True</code></td></tr>
         <tr><td><strong>C++</strong></td><td>GoogleMock (parte de GoogleTest)</td><td><code>EXPECT_CALL(mock, esta_filtrada("Abcd1234")).WillOnce(Return(true));</code></td></tr>
         <tr><td><strong>Flutter/Dart</strong></td><td><code>mocktail</code> (o <code>mockito</code>)</td><td><code>when(() => mock.estaFiltrada(any())).thenReturn(true);</code></td></tr>
+        <tr><td><strong>Java/Spring Boot</strong></td><td><code>Mockito</code></td><td><code>when(servicioFiltradas.estaFiltrada("Abcd1234")).thenReturn(true);</code></td></tr>
       </tbody>
     </table>
+  </div>
+  <div class="callout">
+    En Spring Boot, <code>@MockBean</code> va un paso más allá que Mockito puro: reemplaza el bean real
+    dentro del contexto de inyección de dependencias de Spring por el mock, útil cuando la clase bajo
+    prueba recibe su dependencia vía <code>@Autowired</code> en vez de por parámetro directo.
   </div>
 </section>
 
@@ -175,7 +189,7 @@ def test_rechaza_password_filtrada():
   <h2>Autoevaluación</h2>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 1 de 5</span>
+    <span class="section-kicker">Pregunta 1 de 6</span>
     <p class="sc-question">
       Un test hace <code>assert resultado is not None</code> sobre una función que debería devolver
       exactamente <code>True</code>. Aunque la línea queda "cubierta" al 100%, ¿qué problema tiene esta
@@ -194,8 +208,8 @@ def test_rechaza_password_filtrada():
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 2 de 5</span>
-    <p class="sc-question">¿Qué formato de reporte comparten las tres herramientas de cobertura mostradas (coverage.py, gcov/lcov, flutter test --coverage)?</p>
+    <span class="section-kicker">Pregunta 2 de 6</span>
+    <p class="sc-question">¿Qué formato de reporte comparten coverage.py, gcov/lcov y flutter test --coverage, a diferencia de JaCoCo en Java/Spring Boot?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">JSON</button>
       <button class="sc-option" data-correct="true">lcov, reportable como HTML con <code>genhtml</code></button>
@@ -203,13 +217,13 @@ def test_rechaza_password_filtrada():
       <button class="sc-option" data-correct="false">Cada una usa un formato completamente distinto y no interoperable</button>
     </div>
     <div class="sc-rationale">
-      Correcto: las tres terminan en <code>lcov.info</code> (o equivalente), lo que permite reusar el mismo
-      pipeline de reporte en CI (Módulo 5) y en SonarCloud (Módulo 6) sin importar el stack.
+      Correcto: esas tres terminan en <code>lcov.info</code> (o equivalente); JaCoCo usa su propio formato
+      nativo en vez de <code>lcov</code>. SonarCloud (Módulo 6) entiende ambos formatos de primera clase.
     </div>
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 3 de 5</span>
+    <span class="section-kicker">Pregunta 3 de 6</span>
     <p class="sc-question">En el ejemplo de mockear el servicio de contraseñas filtradas, ¿por qué se usa un mock en vez de llamar al servicio real durante el test?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Porque el servicio real no existe todavía</button>
@@ -224,7 +238,7 @@ def test_rechaza_password_filtrada():
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 4 de 5</span>
+    <span class="section-kicker">Pregunta 4 de 6</span>
     <p class="sc-question">Según el checklist de laboratorio de esta página, ¿qué evidencia concreta en el historial de Git demuestra que sí se siguió TDD y no solo se escribió el código y los tests al final?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Un solo commit grande con el código y los tests juntos</button>
@@ -239,7 +253,7 @@ def test_rechaza_password_filtrada():
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 5 de 5</span>
+    <span class="section-kicker">Pregunta 5 de 6</span>
     <p class="sc-question">¿Qué mide de forma más estricta la "cobertura de ramas" en comparación con la "cobertura de líneas"?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">La cantidad total de líneas de código del proyecto</button>
@@ -250,6 +264,22 @@ def test_rechaza_password_filtrada():
     <div class="sc-rationale">
       Correcto: una línea con un <code>if/else</code> puede contar como "cubierta" con solo probar una de
       las dos ramas; la cobertura de ramas exige haber ejercitado ambos caminos posibles.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 6 de 6</span>
+    <p class="sc-question">En un test de Spring Boot, la clase bajo prueba recibe el servicio de contraseñas filtradas vía <code>@Autowired</code> en vez de como parámetro. ¿Qué anotación de Mockito/Spring reemplaza ese bean real por un mock dentro del contexto de inyección de dependencias?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false"><code>@Test</code></button>
+      <button class="sc-option" data-correct="true"><code>@MockBean</code></button>
+      <button class="sc-option" data-correct="false"><code>@Component</code></button>
+      <button class="sc-option" data-correct="false"><code>@RequestMapping</code></button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: <code>@MockBean</code> es específico de Spring Boot Test — a diferencia de un mock de
+      Mockito puro (que se pasa a mano), reemplaza el bean real dentro del contexto de Spring, útil cuando
+      la dependencia se inyecta automáticamente en vez de recibirse por parámetro.
     </div>
   </div>
 </section>

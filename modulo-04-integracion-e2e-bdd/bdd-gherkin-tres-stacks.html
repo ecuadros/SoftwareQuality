@@ -1,6 +1,6 @@
 ---
 layout: lab
-title: "BDD con Gherkin en los Tres Stacks"
+title: "BDD con Gherkin en los Cuatro Stacks"
 subtitle: "Given-When-Then no es sintaxis obligatoria — es un formato para que negocio y desarrollo describan el mismo comportamiento sin ambigüedad."
 eyebrow: "Módulo 4 · Pruebas de Integración, E2E y BDD"
 module: 4
@@ -17,6 +17,7 @@ next_title: "Suite E2E y laboratorio"
   <a href="#python-behave">Python — Behave (Gherkin real)</a>
   <a href="#cpp-fixtures">C++ — GoogleTest fixtures + CTest</a>
   <a href="#flutter-integration">Flutter/Dart — integration_test y golden tests</a>
+  <a href="#java-cucumber">Java/Spring Boot — Cucumber-JVM</a>
   <a href="#comparacion-bdd">Lo que cada stack sí y no puede hacer</a>
   <a href="#autoevaluacion">Autoevaluación</a>
 </nav>
@@ -43,7 +44,7 @@ next_title: "Suite E2E y laboratorio"
   <h2>El feature: cupón de descuento en el carrito</h2>
   <p>
     Vas a ver el mismo escenario de negocio implementado con la herramienta apropiada de cada stack — que,
-    como vas a ver, <strong>no es la misma herramienta en los tres casos</strong>, y esa diferencia es
+    como vas a ver, <strong>no es la misma herramienta en los cuatro casos</strong>, y esa diferencia es
     justamente parte de lo que hay que aprender a reconocer.
   </p>
   <div class="code-block">
@@ -66,12 +67,13 @@ next_title: "Suite E2E y laboratorio"
 </section>
 
 <section class="demo-section" id="python-behave">
-  <span class="section-kicker">// stack 1 de 3 — Gherkin ejecutado literalmente</span>
+  <span class="section-kicker">// stack 1 de 4 — Gherkin ejecutado literalmente</span>
   <h2>Python — Behave</h2>
   <p>
     Behave ejecuta el archivo <code>.feature</code> tal cual, palabra por palabra, contra "step
-    definitions" en Python que implementan cada línea. Es la única de las tres herramientas de este módulo
-    que corre Gherkin de forma literal.
+    definitions" en Python que implementan cada línea. Es una de las dos herramientas de este módulo que
+    corren Gherkin de forma literal — la otra es Cucumber-JVM en Java, más abajo — cada una con step
+    definitions en su propio lenguaje.
   </p>
   <div class="code-block">
     <div class="code-block-label">features/steps/carrito_steps.py</div>
@@ -102,7 +104,7 @@ def step_impl(context, monto):
 </section>
 
 <section class="demo-section" id="cpp-fixtures">
-  <span class="section-kicker">// stack 2 de 3 — la práctica equivalente, no Gherkin literal</span>
+  <span class="section-kicker">// stack 2 de 4 — la práctica equivalente, no Gherkin literal</span>
   <h2>C++ — GoogleTest fixtures + CTest</h2>
   <div class="callout warn">
     <strong>Diferencia importante:</strong> el ecosistema de C++ no tiene un corredor de Gherkin maduro y
@@ -150,7 +152,7 @@ TEST_F(CarritoConCupon, CuponExpiradoEsRechazado) {
 </section>
 
 <section class="demo-section" id="flutter-integration">
-  <span class="section-kicker">// stack 3 de 3 — el mismo comportamiento, a nivel de UI</span>
+  <span class="section-kicker">// stack 3 de 4 — el mismo comportamiento, a nivel de UI</span>
   <h2>Flutter/Dart — integration_test y golden tests</h2>
   <p>
     En Flutter, la forma natural de expresar este mismo escenario de negocio a nivel de comportamiento
@@ -195,25 +197,84 @@ $ flutter test                    <span class="cm"># compara contra la referenci
   </div>
 </section>
 
+<section class="demo-section" id="java-cucumber">
+  <span class="section-kicker">// stack 4 de 4 — Gherkin ejecutado literalmente, como Behave</span>
+  <h2>Java/Spring Boot — Cucumber-JVM</h2>
+  <p>
+    A diferencia de C++, el ecosistema Java sí tiene un corredor de Gherkin maduro y ampliamente adoptado
+    en la industria: <strong>Cucumber-JVM</strong>. Corre el mismo archivo <code>carrito.feature</code> de
+    arriba tal cual, contra step definitions escritas en Java.
+  </p>
+  <div class="code-block">
+    <div class="code-block-label">src/test/java/CarritoSteps.java</div>
+    <pre><span class="cm">import io.cucumber.java.es.Dado;</span>
+import io.cucumber.java.es.Cuando;
+import io.cucumber.java.es.Entonces;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class CarritoSteps {
+
+    private Carrito carrito;
+    private Cupon cupon;
+
+    @Dado("un carrito con un monto total de {double}")
+    public void unCarritoConMontoTotal(double monto) {
+        carrito = new Carrito(monto);
+    }
+
+    @Dado("un cupón {string} válido que otorga {int}% de descuento")
+    public void unCuponValido(String codigo, int porcentaje) {
+        cupon = new Cupon(codigo, porcentaje, false);
+    }
+
+    @Cuando("el cliente aplica el cupón {string} al carrito")
+    public void elClienteAplicaElCupon(String codigo) {
+        carrito.aplicarCupon(cupon);
+    }
+
+    @Entonces("el monto total del carrito debe ser {double}")
+    public void elMontoTotalDebeSer(double monto) {
+        assertEquals(monto, carrito.getMontoTotal(), 0.01);
+    }
+}</pre>
+  </div>
+  <div class="code-block">
+    <div class="code-block-label">bash — Maven</div>
+    <pre>$ mvn test
+<span class="cm"># 2 Scenarios (2 passed)
+# 8 Steps (8 passed)</span></pre>
+  </div>
+  <div class="callout">
+    Cucumber-JVM trae paquetes de anotaciones traducidas — <code>io.cucumber.java.es</code> usa
+    <code>@Dado</code>/<code>@Cuando</code>/<code>@Entonces</code> en vez de
+    <code>@Given</code>/<code>@When</code>/<code>@Then</code>, pensado exactamente para proyectos que,
+    como este curso, escriben sus escenarios en español. En un proyecto Spring Boot real, estas step
+    definitions suelen anotarse además con <code>@SpringBootTest</code> para correr contra el contexto real
+    de la aplicación, en vez de contra objetos de dominio sueltos como en este ejemplo mínimo.
+  </div>
+</section>
+
 <section class="demo-section" id="comparacion-bdd">
   <span class="section-kicker">// el punto de la comparación</span>
   <h2>Lo que cada stack sí y no puede hacer</h2>
   <div class="worked-example">
     <table class="worked-table">
       <thead>
-        <tr><th></th><th>Python (Behave)</th><th>C++ (GoogleTest fixtures)</th><th>Flutter/Dart (integration_test)</th></tr>
+        <tr><th></th><th>Python (Behave)</th><th>C++ (GoogleTest fixtures)</th><th>Flutter/Dart (integration_test)</th><th>Java/Spring Boot (Cucumber-JVM)</th></tr>
       </thead>
       <tbody>
-        <tr><td><strong>¿Corre Gherkin literal?</strong></td><td>Sí — el <code>.feature</code> es el test</td><td>No — el escenario se traduce a nombres de test y comentarios</td><td>No — el escenario se traduce a pasos de interacción con la UI</td></tr>
-        <tr><td><strong>Nivel probado</strong></td><td>Lógica de negocio directa</td><td>Lógica de negocio directa</td><td>UI completa, como la usa el usuario</td></tr>
-        <tr><td><strong>Riesgo si se fuerza la herramienta "equivalente"</strong></td><td>—</td><td>Adoptar un runner de Gherkin poco mantenido solo por "consistencia" añade fragilidad sin beneficio real</td><td>Usar solo pruebas de lógica pura perdería la cobertura del flujo real de UI, que es donde más bugs de integración aparecen en apps móviles</td></tr>
+        <tr><td><strong>¿Corre Gherkin literal?</strong></td><td>Sí — el <code>.feature</code> es el test</td><td>No — el escenario se traduce a nombres de test y comentarios</td><td>No — el escenario se traduce a pasos de interacción con la UI</td><td>Sí — el mismo <code>.feature</code>, con step definitions en Java</td></tr>
+        <tr><td><strong>Nivel probado</strong></td><td>Lógica de negocio directa</td><td>Lógica de negocio directa</td><td>UI completa, como la usa el usuario</td><td>Lógica de negocio directa (o el contexto completo de Spring, si se anota con <code>@SpringBootTest</code>)</td></tr>
+        <tr><td><strong>Riesgo si se fuerza la herramienta "equivalente"</strong></td><td>—</td><td>Adoptar un runner de Gherkin poco mantenido solo por "consistencia" añade fragilidad sin beneficio real</td><td>Usar solo pruebas de lógica pura perdería la cobertura del flujo real de UI, que es donde más bugs de integración aparecen en apps móviles</td><td>—</td></tr>
       </tbody>
     </table>
   </div>
   <div class="callout accent2">
     La lección de este módulo no es "Gherkin en todos lados a la fuerza" — es que el <strong>mismo
     comportamiento de negocio</strong> se puede especificar de forma ejecutable con la herramienta que mejor
-    encaja en cada ecosistema, sin perder precisión ni cobertura.
+    encaja en cada ecosistema, sin perder precisión ni cobertura. Que Python y Java sí tengan un corredor de
+    Gherkin maduro, y C++ no, es una propiedad del ecosistema — no un juicio sobre qué lenguaje es "mejor"
+    para BDD.
   </div>
 </section>
 
@@ -222,23 +283,23 @@ $ flutter test                    <span class="cm"># compara contra la referenci
   <h2>Autoevaluación</h2>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 1 de 5</span>
-    <p class="sc-question">¿Cuál de los tres stacks vistos en esta página ejecuta el archivo <code>.feature</code> de Gherkin de forma literal?</p>
+    <span class="section-kicker">Pregunta 1 de 6</span>
+    <p class="sc-question">¿Cuáles DOS de los cuatro stacks vistos en esta página ejecutan el archivo <code>.feature</code> de Gherkin de forma literal?</p>
     <div class="sc-options">
-      <button class="sc-option" data-correct="true">Python, con Behave</button>
-      <button class="sc-option" data-correct="false">C++, con GoogleTest fixtures</button>
-      <button class="sc-option" data-correct="false">Flutter/Dart, con integration_test</button>
-      <button class="sc-option" data-correct="false">Los tres ejecutan el mismo archivo <code>.feature</code></button>
+      <button class="sc-option" data-correct="true">Python (Behave) y Java/Spring Boot (Cucumber-JVM)</button>
+      <button class="sc-option" data-correct="false">C++ y Flutter/Dart</button>
+      <button class="sc-option" data-correct="false">Python y C++</button>
+      <button class="sc-option" data-correct="false">Los cuatro ejecutan el mismo archivo <code>.feature</code></button>
     </div>
     <div class="sc-rationale">
-      Correcto: Behave es el único de los tres que corre el archivo <code>.feature</code> palabra por
-      palabra contra step definitions. C++ y Flutter/Dart expresan el mismo comportamiento con otras
-      herramientas.
+      Correcto: Behave (Python) y Cucumber-JVM (Java) corren el archivo <code>.feature</code> palabra por
+      palabra, cada uno contra step definitions en su propio lenguaje. C++ y Flutter/Dart expresan el mismo
+      comportamiento con otras herramientas, sin un archivo <code>.feature</code> de por medio.
     </div>
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 2 de 5</span>
+    <span class="section-kicker">Pregunta 2 de 6</span>
     <p class="sc-question">Según esta página, ¿por qué C++ no usa un corredor de Gherkin literal para expresar el mismo escenario?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Porque GoogleTest no permite escribir nombres de test descriptivos</button>
@@ -254,7 +315,7 @@ $ flutter test                    <span class="cm"># compara contra la referenci
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 3 de 5</span>
+    <span class="section-kicker">Pregunta 3 de 6</span>
     <p class="sc-question">En el test de Flutter/Dart mostrado, ¿qué nivel del sistema se está probando, a diferencia de la versión en Python?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Exactamente el mismo nivel: la función de lógica de negocio pura, sin UI</button>
@@ -270,7 +331,7 @@ $ flutter test                    <span class="cm"># compara contra la referenci
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 4 de 5</span>
+    <span class="section-kicker">Pregunta 4 de 6</span>
     <p class="sc-question">¿Qué verifica específicamente un golden test en Flutter que un test de lógica pura no verifica?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Que el cálculo del descuento sea numéricamente correcto</button>
@@ -285,10 +346,10 @@ $ flutter test                    <span class="cm"># compara contra la referenci
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 5 de 5</span>
-    <p class="sc-question">Según la comparación final de esta página, ¿cuál es la lección principal de mostrar el mismo feature implementado con tres herramientas distintas?</p>
+    <span class="section-kicker">Pregunta 5 de 6</span>
+    <p class="sc-question">Según la comparación final de esta página, ¿cuál es la lección principal de mostrar el mismo feature implementado con cuatro herramientas distintas?</p>
     <div class="sc-options">
-      <button class="sc-option" data-correct="false">Que Gherkin literal debe forzarse en los tres stacks sin excepción</button>
+      <button class="sc-option" data-correct="false">Que Gherkin literal debe forzarse en los cuatro stacks sin excepción</button>
       <button class="sc-option" data-correct="true">Que el mismo comportamiento de negocio puede especificarse de forma ejecutable con la herramienta que mejor encaja en cada ecosistema, sin perder precisión</button>
       <button class="sc-option" data-correct="false">Que solo Python es apto para BDD</button>
       <button class="sc-option" data-correct="false">Que C++ y Flutter no pueden hacer pruebas basadas en comportamiento</button>
@@ -296,6 +357,23 @@ $ flutter test                    <span class="cm"># compara contra la referenci
     <div class="sc-rationale">
       Correcto: BDD es una forma de pensar y especificar comportamiento, no una sintaxis obligatoria — la
       herramienta correcta es la que encaja mejor en cada ecosistema sin sacrificar cobertura ni claridad.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 6 de 6</span>
+    <p class="sc-question">¿Para qué existen específicamente las anotaciones <code>@Dado</code>/<code>@Cuando</code>/<code>@Entonces</code> del paquete <code>io.cucumber.java.es</code> mostradas en la sección de Java/Spring Boot?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Son un error tipográfico; Cucumber-JVM solo acepta <code>@Given</code>/<code>@When</code>/<code>@Then</code></button>
+      <button class="sc-option" data-correct="true">Cucumber-JVM ofrece paquetes de anotaciones traducidas para que los step definitions coincidan con escenarios <code>.feature</code> escritos en español</button>
+      <button class="sc-option" data-correct="false">Sirven para conectar Cucumber directamente a una base de datos MongoDB</button>
+      <button class="sc-option" data-correct="false">Reemplazan la necesidad de anotar la clase con <code>@SpringBootTest</code></button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: como este curso escribe sus escenarios en español, el paquete <code>io.cucumber.java.es</code>
+      permite que las step definitions usen exactamente las mismas palabras (<code>Dado</code>,
+      <code>Cuando</code>, <code>Entonces</code>) que aparecen en el archivo <code>.feature</code>, en vez de
+      forzar una traducción mental a <code>Given</code>/<code>When</code>/<code>Then</code>.
     </div>
   </div>
 </section>
