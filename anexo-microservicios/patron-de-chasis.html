@@ -1,0 +1,210 @@
+---
+layout: lab
+title: "Arquitectura de Microservicios: el Patrón de Chasis"
+subtitle: "Todos los microservicios pueden ser distintos — pero si no comparten el mismo chasis, cada equipo reinventa la misma rueda (mal) una vez por servicio."
+eyebrow: "Anexo · Arquitectura de Microservicios — material adicional, sin fecha de corte"
+module: "Extra"
+module_title: "Arquitectura de Microservicios: el Patrón de Chasis"
+prev_url: "/modulo-08-procesos-devops/laboratorio-incidente-checklist-cierre.html"
+prev_title: "Laboratorio: simulación de incidente y checklist de cierre"
+next_url: "/anexo-microservicios/chasis-en-la-practica.html"
+next_title: "Chasis en la práctica: un parent POM para tres dominios distintos"
+---
+
+<div class="callout accent2">
+  <strong>Este anexo es material adicional, no un módulo con fecha de corte.</strong> No cambia el
+  cronograma de 8 módulos ni la rúbrica de evaluación — existe para quienes quieran ir un paso más allá,
+  especialmente si tu equipo está considerando una arquitectura de microservicios para el
+  <strong>Proyecto Final</strong>. Todo lo que necesitas para aprobar el curso ya está en los Módulos 1-8.
+</div>
+
+<nav class="demo-toc">
+  <a href="#el-problema">N servicios, N formas distintas de resolver lo mismo</a>
+  <a href="#que-es-chasis">El patrón de Chasis</a>
+  <a href="#anatomia-chasis">Anatomía de un chasis: lo que ya construiste, empaquetado</a>
+  <a href="#lego">El mapa de Lego: salud, educación y agricultura</a>
+  <a href="#autoevaluacion">Autoevaluación</a>
+</nav>
+
+<section class="demo-section" id="el-problema">
+  <span class="section-kicker">// el problema</span>
+  <h2>N servicios, N formas distintas de resolver lo mismo</h2>
+  <p>
+    Un equipo construye <code>salud-service</code> siguiendo todo lo de este curso: pipeline de CI (Módulo
+    5), logging estructurado (Módulo 7), análisis estático (Módulo 6), dependency scanning (Módulo 7).
+    Meses después, otro equipo dentro de la misma organización empieza <code>educacion-service</code> desde
+    cero — y sin darse cuenta, configura el logging con otro formato de campos, otro umbral de cobertura,
+    otra versión del linter. Cuando llega <code>agricultura-service</code>, ya hay tres formas ligeramente
+    distintas de hacer exactamente lo mismo.
+  </p>
+  <div class="callout warn">
+    <strong>El costo se multiplica por cada servicio nuevo.</strong> Ninguna de las tres decisiones fue
+    "incorrecta" por separado — pero ahora quien opera el sistema completo tiene que aprender tres formatos
+    de log distintos para investigar un incidente que cruza los tres servicios (el problema exacto de
+    trazabilidad distribuida del Módulo 7), y cada mejora de seguridad o de calidad hay que aplicarla tres
+    veces, por separado, con tres resultados posiblemente distintos.
+  </div>
+  <p>
+    El problema no es tener varios servicios — es no tener una <strong>base común</strong> explícita para
+    las decisiones que no deberían variar de servicio a servicio.
+  </p>
+</section>
+
+<section class="demo-section" id="que-es-chasis">
+  <span class="section-kicker">// el nombre viene de un auto, literalmente</span>
+  <h2>El patrón de Chasis</h2>
+  <p>
+    El <strong>Microservice Chassis</strong> (Chris Richardson, <em>Microservices Patterns</em>) toma
+    prestado el nombre de la industria automotriz: un <strong>chasis</strong> es el armazón estructural
+    sobre el que se monta cualquier modelo de auto — un sedán, una camioneta, un auto deportivo pueden tener
+    carrocerías completamente distintas, pero comparten el mismo chasis con el motor, la suspensión, el
+    sistema eléctrico y los frenos ya resueltos.
+  </p>
+  <p>
+    Un chasis de microservicio es exactamente eso: una <strong>plantilla base</strong> — un proyecto
+    starter, una librería compartida, un parent POM — que resuelve de una sola vez todas las decisiones de
+    calidad que <em>no</em> deberían depender de qué hace el servicio. Cada servicio nuevo <em>hereda</em>
+    el chasis y solo agrega lo que lo hace único: su lógica de dominio.
+  </p>
+  <div class="callout">
+    Nada de esto es una herramienta nueva que no hayas visto — es un <strong>empaquetado</strong> de
+    decisiones que ya tomaste en los Módulos 3 a 7, para no volver a tomarlas manualmente cada vez que nace
+    un servicio nuevo.
+  </div>
+</section>
+
+<section class="demo-section" id="anatomia-chasis">
+  <span class="section-kicker">// nada nuevo, todo empaquetado</span>
+  <h2>Anatomía de un chasis: lo que ya construiste, empaquetado</h2>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Elemento del chasis</th><th>De dónde sale</th><th>Por qué NO debería decidirse por servicio</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Framework de testing + umbral de cobertura</strong></td><td>Módulo 3</td><td>Si cada servicio define su propio umbral, "calidad suficiente" deja de significar algo comparable entre equipos.</td></tr>
+        <tr><td><strong>Pipeline de CI/CD con quality gates</strong></td><td>Módulo 5</td><td>Copiar y pegar el YAML en cada repo nuevo garantiza que diverjan con el tiempo — un chasis lo centraliza en una action reusable o un template de workflow.</td></tr>
+        <tr><td><strong>Análisis estático y dependency scanning preconfigurados</strong></td><td>Módulos 6-7</td><td>Las mismas reglas de Checkstyle/PMD/SpotBugs y el mismo escáner de CVEs deberían aplicar a todo el fleet, no a criterio de cada equipo.</td></tr>
+        <tr><td><strong>Logging estructurado con el mismo esquema de campos</strong></td><td>Módulo 7</td><td>Sin un esquema común, correlacionar logs entre servicios (trace ID incluido) se vuelve imposible.</td></tr>
+        <tr><td><strong>Health checks y métricas (Actuator)</strong></td><td>Módulo 7</td><td>El orquestador (Kubernetes, un load balancer) necesita preguntar "¿estás sano?" de la misma forma a cualquier servicio del fleet.</td></tr>
+        <tr><td><strong>Circuit breaker con configuración por defecto razonable</strong></td><td>Módulo 7</td><td>Un servicio que olvida configurar resiliencia hacia sus dependencias arriesga una falla en cascada que afecta a todos los demás.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout accent2">
+    Nota el patrón: todas las filas son cosas que un servicio necesita para ser <strong>operable de forma
+    consistente</strong> junto a otros — ninguna tiene que ver con si el servicio gestiona citas médicas,
+    matrículas escolares o cosechas. Esa es exactamente la línea que separa "chasis" de "lógica de negocio".
+  </div>
+</section>
+
+<section class="demo-section" id="lego">
+  <span class="section-kicker">// la metáfora que sí importa retener</span>
+  <h2>El mapa de Lego: salud, educación y agricultura</h2>
+  <p>
+    Piensa en un chasis de microservicio como la <strong>placa base de Lego</strong>: todas las piezas que
+    se construyen encima pueden ser completamente distintas — una nave espacial, un castillo, un auto — pero
+    todas se conectan al mismo patrón de conectores. Nadie rediseña la placa base cada vez que arma algo
+    nuevo.
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th></th><th>salud-service</th><th>educacion-service</th><th>agricultura-service</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Entidad de dominio</strong></td><td>Cita médica</td><td>Matrícula</td><td>Cosecha</td></tr>
+        <tr><td><strong>Regla de negocio única</strong></td><td>Un médico no puede tener dos citas superpuestas</td><td>Un estudiante no puede matricularse en cursos con horario cruzado</td><td>Una parcela no puede cosecharse dos veces en la misma temporada</td></tr>
+        <tr><td><strong>Chasis compartido</strong></td><td colspan="3" style="text-align:center;">Idéntico en los tres: mismo pipeline, mismo formato de logs, mismo health check, mismo circuit breaker por defecto.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Tres dominios sin absolutamente nada en común a nivel de negocio — y aun así, quien opera el sistema
+    completo puede investigar un incidente en cualquiera de los tres de la misma forma, porque el chasis
+    nunca varió. Eso es lo que hace posible que "salud", "educación" y "agricultura" convivan en el mismo
+    fleet de servicios sin que cada uno sea una isla operativa distinta.
+  </p>
+</section>
+
+<section class="demo-section" id="autoevaluacion">
+  <span class="section-kicker">// autoevaluación</span>
+  <h2>Autoevaluación</h2>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 1 de 5</span>
+    <p class="sc-question">En el ejemplo inicial, ¿cuál fue exactamente el problema entre <code>salud-service</code>, <code>educacion-service</code> y <code>agricultura-service</code>?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Ninguno de los tres tenía tests</button>
+      <button class="sc-option" data-correct="true">Cada equipo resolvió de forma ligeramente distinta las mismas decisiones de calidad (logging, cobertura, linters), sin una base común explícita</button>
+      <button class="sc-option" data-correct="false">Los tres servicios compartían la misma base de datos</button>
+      <button class="sc-option" data-correct="false">Los tres equipos usaban lenguajes de programación distintos</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: el problema no fue la calidad individual de cada decisión, sino la falta de una base
+      compartida — lo que hace que investigar o mejorar el sistema completo cueste tres veces más.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 2 de 5</span>
+    <p class="sc-question">¿De dónde viene el nombre "chasis" para este patrón?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Es un acrónimo en inglés sin relación con ningún objeto real</button>
+      <button class="sc-option" data-correct="true">De la industria automotriz: el armazón estructural compartido sobre el que se monta cualquier modelo de carrocería</button>
+      <button class="sc-option" data-correct="false">Del nombre de la empresa que inventó Kubernetes</button>
+      <button class="sc-option" data-correct="false">De un tipo de base de datos distribuida</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: la metáfora es literal — igual que un sedán y una camioneta comparten motor, suspensión y
+      sistema eléctrico bajo carrocerías distintas, los microservicios comparten un chasis de decisiones de
+      calidad bajo lógicas de negocio distintas.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 3 de 5</span>
+    <p class="sc-question">Según la tabla de anatomía del chasis, ¿por qué el umbral de cobertura de tests NO debería decidirse por separado en cada servicio?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Porque todos los servicios deben tener exactamente la misma lógica de negocio</button>
+      <button class="sc-option" data-correct="true">Porque si cada servicio define su propio umbral, "calidad suficiente" deja de ser algo comparable entre equipos del mismo fleet</button>
+      <button class="sc-option" data-correct="false">Porque JaCoCo no permite configurar umbrales distintos por proyecto</button>
+      <button class="sc-option" data-correct="false">Porque el umbral de cobertura es una decisión de negocio, no de calidad</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: el chasis centraliza justamente las decisiones que deben ser consistentes para que la
+      organización entera hable el mismo idioma de calidad, sin importar quién construyó cada servicio.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 4 de 5</span>
+    <p class="sc-question">Según el callout de esta página, ¿qué línea separa lo que va DENTRO del chasis de lo que NO va?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Si el código está escrito en Java o en otro lenguaje</button>
+      <button class="sc-option" data-correct="true">Si el elemento es necesario para operar el servicio de forma consistente junto a otros, independientemente de su lógica de negocio</button>
+      <button class="sc-option" data-correct="false">Si el equipo que lo construyó es senior o junior</button>
+      <button class="sc-option" data-correct="false">Si el servicio se despliega en la nube o en un servidor propio</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: health checks, logging, CI, circuit breakers son necesarios sin importar si el servicio
+      gestiona citas médicas o cosechas — esa independencia del dominio es justo lo que los hace parte del
+      chasis y no de la lógica de negocio.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 5 de 5</span>
+    <p class="sc-question">En la metáfora de Lego de esta página, ¿qué representa la "placa base" en el contexto de microservicios?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">La base de datos compartida entre todos los servicios</button>
+      <button class="sc-option" data-correct="true">El chasis: el conjunto de decisiones de calidad e infraestructura compartidas por todos los servicios, sin importar su dominio</button>
+      <button class="sc-option" data-correct="false">El equipo de desarrollo que construye todos los servicios</button>
+      <button class="sc-option" data-correct="false">El servidor físico donde corren los contenedores</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: la placa base es fija y compartida (el chasis); lo que se construye encima —la lógica de
+      negocio de salud, educación o agricultura— es lo que varía libremente, como las piezas de Lego.
+    </div>
+  </div>
+</section>

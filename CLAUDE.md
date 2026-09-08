@@ -60,6 +60,7 @@ Unlike a course about visualizing algorithms, "quality" is demonstrated by *doin
 /modulo-07-produccion-seguridad-observabilidad/
 /modulo-08-procesos-devops/
 /proyecto-final/
+/anexo-microservicios/
 _layouts/
 _includes/
 assets/
@@ -82,6 +83,20 @@ Each module page is self-contained. Shared visual components (callouts, checklis
 | 7 | Calidad en Producción: Seguridad, Performance, Observabilidad | 12–13 | Dependency scanning, sanitizers, logging estructurado | Snyk/pip-audit, k6 | ASan/UBSan, Valgrind | pub audit, Flutter DevTools (performance) | OWASP Dependency-Check, Spring Boot Actuator |
 | 8 | Procesos, Cultura DevOps y Postmortems | 14 | Simulación de incidente + postmortem sin culpa, Definition of Done de equipo | — | — | — | — |
 | — | Proyecto Final | 15–16 | Pipeline de calidad end-to-end, stack a elección del equipo, sustentado mostrando el repo real | — | — | — | — |
+
+## Anexo: Arquitectura de Microservicios (optional, outside the 16-week schedule)
+
+`/anexo-microservicios/` is deliberately **not** numbered as a module and carries no week/cutoff date — it
+exists in its own `section-header` block on the index between the 8-module grid and Proyecto Final, labeled
+"Anexo · Opcional" instead of "Semana N". It does not affect the evaluation rubric. Content: the
+**Microservice Chassis pattern** (Chris Richardson) as the unifying idea that lets otherwise-unrelated
+domain services (the running example uses salud/educación/agricultura) share one base of cross-cutting
+concerns — reusing what Módulos 3–7 already built (CI template, structured logging, tracing, circuit
+breaker, dependency scanning, contract testing) — while each service's own domain logic stays free to
+differ completely. Two pages: the pattern/anatomy, then a concrete Java/Spring Boot parent-POM
+implementation with three domain services inheriting it. Written for teams considering microservices for
+the Proyecto Final; if this ever grows into required content, promote it to a numbered module (with an
+explicit call to renumber weeks) rather than leaving it half-in/half-out of the schedule.
 
 ## Evaluation
 

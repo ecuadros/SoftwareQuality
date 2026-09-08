@@ -1,0 +1,298 @@
+---
+layout: lab
+title: "Chasis en la Práctica: un Parent POM para Tres Dominios Distintos"
+subtitle: "Salud, educación y agricultura no comparten ni una entidad de dominio — y aun así heredan exactamente el mismo archivo."
+eyebrow: "Anexo · Arquitectura de Microservicios — material adicional, sin fecha de corte"
+module: "Extra"
+module_title: "Arquitectura de Microservicios: el Patrón de Chasis"
+prev_url: "/anexo-microservicios/patron-de-chasis.html"
+prev_title: "Arquitectura de microservicios: el patrón de chasis"
+---
+
+<div class="callout accent2">
+  <strong>Continuación del anexo anterior.</strong> Si tu equipo está evaluando microservicios para el
+  Proyecto Final, esta página muestra el chasis de la página anterior convertido en código real —
+  concretamente en Java/Spring Boot, el stack más natural para esto, aunque el mismo principio aplica con
+  una librería compartida en cualquiera de los otros tres stacks del curso.
+</div>
+
+<nav class="demo-toc">
+  <a href="#parent-pom">El chasis como parent POM</a>
+  <a href="#config-base">Configuración base compartida</a>
+  <a href="#tres-servicios">Tres servicios, un mismo chasis</a>
+  <a href="#otros-stacks">¿Y en Python, C++ o Flutter/Dart?</a>
+  <a href="#explorar">Para explorarlo por tu cuenta</a>
+  <a href="#autoevaluacion">Autoevaluación</a>
+</nav>
+
+<section class="demo-section" id="parent-pom">
+  <span class="section-kicker">// el chasis, en un solo archivo</span>
+  <h2>El chasis como parent POM</h2>
+  <p>
+    En Maven, un <strong>parent POM</strong> es un archivo del que otros proyectos heredan configuración —
+    versiones de dependencias, plugins de build, propiedades. Es el lugar natural para materializar el
+    chasis: cada elemento de la tabla de la página anterior se declara <strong>una sola vez</strong> aquí.
+  </p>
+  <div class="code-block">
+    <div class="code-block-label">acme-chasis/pom.xml</div>
+    <pre>&lt;project&gt;
+  &lt;groupId&gt;com.acme&lt;/groupId&gt;
+  &lt;artifactId&gt;acme-chasis&lt;/artifactId&gt;
+  &lt;version&gt;1.4.0&lt;/version&gt;
+  &lt;packaging&gt;pom&lt;/packaging&gt;
+
+  &lt;dependencyManagement&gt;
+    &lt;dependencies&gt;
+      <span class="cm">&lt;!-- Módulo 7: health checks, métricas --&gt;</span>
+      &lt;dependency&gt;&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;&lt;artifactId&gt;spring-boot-starter-actuator&lt;/artifactId&gt;&lt;/dependency&gt;
+      <span class="cm">&lt;!-- Módulo 7: circuit breaker --&gt;</span>
+      &lt;dependency&gt;&lt;groupId&gt;io.github.resilience4j&lt;/groupId&gt;&lt;artifactId&gt;resilience4j-spring-boot3&lt;/artifactId&gt;&lt;/dependency&gt;
+      <span class="cm">&lt;!-- Módulo 7: tracing distribuido --&gt;</span>
+      &lt;dependency&gt;&lt;groupId&gt;io.micrometer&lt;/groupId&gt;&lt;artifactId&gt;micrometer-tracing-bridge-otel&lt;/artifactId&gt;&lt;/dependency&gt;
+      <span class="cm">&lt;!-- Módulo 7: logging estructurado --&gt;</span>
+      &lt;dependency&gt;&lt;groupId&gt;net.logstash.logback&lt;/groupId&gt;&lt;artifactId&gt;logstash-logback-encoder&lt;/artifactId&gt;&lt;/dependency&gt;
+      <span class="cm">&lt;!-- Módulo 4: pruebas de integración con dependencias reales --&gt;</span>
+      &lt;dependency&gt;&lt;groupId&gt;org.testcontainers&lt;/groupId&gt;&lt;artifactId&gt;junit-jupiter&lt;/artifactId&gt;&lt;/dependency&gt;
+    &lt;/dependencies&gt;
+  &lt;/dependencyManagement&gt;
+
+  &lt;build&gt;
+    &lt;pluginManagement&gt;
+      &lt;plugins&gt;
+        <span class="cm">&lt;!-- Módulo 3: cobertura mínima obligatoria --&gt;</span>
+        &lt;plugin&gt;&lt;artifactId&gt;jacoco-maven-plugin&lt;/artifactId&gt;
+          &lt;configuration&gt;&lt;rules&gt;&lt;rule&gt;&lt;limits&gt;&lt;limit&gt;&lt;minimum&gt;0.80&lt;/minimum&gt;&lt;/limit&gt;&lt;/limits&gt;&lt;/rule&gt;&lt;/rules&gt;&lt;/configuration&gt;
+        &lt;/plugin&gt;
+        <span class="cm">&lt;!-- Módulo 6: mismas reglas de análisis estático para todo el fleet --&gt;</span>
+        &lt;plugin&gt;&lt;artifactId&gt;checkstyle-maven-plugin&lt;/artifactId&gt;&lt;/plugin&gt;
+        &lt;plugin&gt;&lt;artifactId&gt;pmd-maven-plugin&lt;/artifactId&gt;&lt;/plugin&gt;
+        &lt;plugin&gt;&lt;groupId&gt;com.github.spotbugs&lt;/groupId&gt;&lt;artifactId&gt;spotbugs-maven-plugin&lt;/artifactId&gt;&lt;/plugin&gt;
+        <span class="cm">&lt;!-- Módulo 7: mismo escáner de CVEs para todo el fleet --&gt;</span>
+        &lt;plugin&gt;&lt;groupId&gt;org.owasp&lt;/groupId&gt;&lt;artifactId&gt;dependency-check-maven&lt;/artifactId&gt;&lt;/plugin&gt;
+      &lt;/plugins&gt;
+    &lt;/pluginManagement&gt;
+  &lt;/build&gt;
+&lt;/project&gt;</pre>
+  </div>
+  <div class="callout warn">
+    Nota lo que <strong>no</strong> hay en este archivo: ninguna mención a citas médicas, matrículas o
+    cosechas. Todo lo que hay aquí es exactamente lo que cualquier servicio del fleet necesita, sin importar
+    qué hace — la línea que separaste en la página anterior, ahora en código.
+  </div>
+</section>
+
+<section class="demo-section" id="config-base">
+  <span class="section-kicker">// mismo formato de log, mismo endpoint de salud</span>
+  <h2>Configuración base compartida</h2>
+  <p>
+    El chasis no es solo dependencias — también fija la configuración por defecto que todo servicio hereda,
+    para que investigar cualquiera de ellos se sienta igual:
+  </p>
+  <div class="code-block">
+    <div class="code-block-label">application-chasis.yml — incluido por todos los servicios</div>
+    <pre>management:
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics, prometheus   <span class="cm"># mismo contrato de observabilidad, Módulo 7</span>
+
+logging:
+  structured:
+    format: ecs   <span class="cm"># mismo esquema de campos JSON en todos los servicios</span>
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        failure-rate-threshold: 50   <span class="cm"># mismo umbral por defecto, Módulo 7</span>
+        wait-duration-in-open-state: 10s</pre>
+  </div>
+</section>
+
+<section class="demo-section" id="tres-servicios">
+  <span class="section-kicker">// la placa base, con piezas distintas encima</span>
+  <h2>Tres servicios, un mismo chasis</h2>
+  <p>
+    Cada servicio de dominio declara el chasis como <code>&lt;parent&gt;</code> y agrega únicamente lo que
+    lo hace único — su entidad de dominio y las dependencias específicas que necesita, nada de lo que ya
+    resolvió el chasis.
+  </p>
+
+  <div class="code-block">
+    <div class="code-block-label">salud-service/pom.xml</div>
+    <pre>&lt;parent&gt;
+  &lt;groupId&gt;com.acme&lt;/groupId&gt;
+  &lt;artifactId&gt;acme-chasis&lt;/artifactId&gt;
+  &lt;version&gt;1.4.0&lt;/version&gt;
+&lt;/parent&gt;
+&lt;artifactId&gt;salud-service&lt;/artifactId&gt;</pre>
+  </div>
+  <div class="code-block">
+    <div class="code-block-label">salud-service/src/main/java/Cita.java — lo único de este servicio</div>
+    <pre>public record Cita(String paciente, String medico, LocalDateTime fecha) {
+    public boolean seSuperponeCon(Cita otra) {
+        return this.medico().equals(otra.medico()) &amp;&amp; this.fecha().equals(otra.fecha());
+    }
+}</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-block-label">educacion-service/src/main/java/Matricula.java — lo único de este servicio</div>
+    <pre>public record Matricula(String estudiante, String curso, String periodo, Horario horario) {
+    public boolean chocaConHorarioDe(Matricula otra) {
+        return this.periodo().equals(otra.periodo()) &amp;&amp; this.horario().seSolapaCon(otra.horario());
+    }
+}</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-block-label">agricultura-service/src/main/java/Cosecha.java — lo único de este servicio</div>
+    <pre>public record Cosecha(String parcela, String cultivo, String temporada, double kilogramos) {
+    public boolean yaCosechadaEnTemporada(String parcela, String temporada, List&lt;Cosecha&gt; historial) {
+        return historial.stream().anyMatch(c -&gt; c.parcela().equals(parcela) &amp;&amp; c.temporada().equals(temporada));
+    }
+}</pre>
+  </div>
+
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Qué comparten los tres (el chasis)</th><th>Qué es único de cada uno (el dominio)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Umbral de cobertura, linters, escáner de CVEs</td><td>Sus propias entidades: <code>Cita</code>, <code>Matricula</code>, <code>Cosecha</code></td></tr>
+        <tr><td>Formato de logs y propagación de trace ID</td><td>Sus propias reglas de negocio y validaciones</td></tr>
+        <tr><td>Endpoints de health check y métricas</td><td>Su propio modelo de datos en MongoDB</td></tr>
+        <tr><td>Configuración por defecto del circuit breaker</td><td>Sus propios endpoints REST específicos del dominio</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout accent2">
+    Cuando el equipo de plataforma mejora el chasis — sube el umbral de cobertura, agrega una regla nueva de
+    SpotBugs, actualiza el formato de tracing — <strong>los tres servicios lo heredan con solo actualizar
+    una versión</strong> en su <code>&lt;parent&gt;</code>, no con tres PRs manuales idénticos.
+  </div>
+</section>
+
+<section class="demo-section" id="otros-stacks">
+  <span class="section-kicker">// el patrón, no la herramienta</span>
+  <h2>¿Y en Python, C++ o Flutter/Dart?</h2>
+  <p>
+    El parent POM es la forma más directa de mostrar un chasis porque Maven lo resuelve de forma nativa —
+    pero el patrón no depende de Maven ni de Java. El mismo principio se materializa distinto en cada
+    ecosistema:
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Stack</th><th>Cómo se vería el chasis</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Python</strong></td><td>Un paquete interno instalable (<code>acme-chasis</code> en un índice privado) con middleware de logging/tracing para FastAPI, configuración de pytest-cov compartida, y un <code>Dockerfile</code> base.</td></tr>
+        <tr><td><strong>C++</strong></td><td>Una plantilla de CMake compartida (<code>acme_chasis.cmake</code>) que fija flags de sanitizers, integración con GoogleTest y el target de cobertura, incluida vía <code>include()</code> en cada servicio.</td></tr>
+        <tr><td><strong>Flutter/Dart</strong></td><td>Un paquete pub interno con <code>analysis_options.yaml</code> base, un cliente HTTP con propagación de trace ID incluida, y widgets de manejo de errores compartidos.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="demo-section" id="explorar">
+  <span class="section-kicker">// opcional, no evaluado</span>
+  <h2>Para explorarlo por tu cuenta</h2>
+  <p>
+    Este anexo no tiene checklist de entrega ni afecta tu nota — si quieres experimentarlo de todas formas,
+    estas son buenas siguientes acciones sobre tu propio proyecto:
+  </p>
+  <div class="checklist" data-key="explorar-chasis">
+    <div class="checklist-header">
+      <span class="checklist-title">Ideas para experimentar (sin obligación)</span>
+      <span class="checklist-progress"></span>
+    </div>
+    <ul>
+      <li data-item="identificar-chasis"><input type="checkbox" id="ax-1" /><label for="ax-1">Identifica en tu propio repo qué configuración (linter, CI, logging) sería reusable si mañana tuvieras un segundo servicio.</label></li>
+      <li data-item="extraer-chasis"><input type="checkbox" id="ax-2" /><label for="ax-2">Extrae esa configuración a un lugar separado (un parent POM, un paquete, una plantilla de workflow reusable).</label></li>
+      <li data-item="segundo-servicio"><input type="checkbox" id="ax-3" /><label for="ax-3">Si tu Proyecto Final usa microservicios, crea un segundo servicio heredando el mismo chasis y confirma que comparte pipeline, logging y health checks sin duplicar configuración.</label></li>
+    </ul>
+  </div>
+</section>
+
+<section class="demo-section" id="autoevaluacion">
+  <span class="section-kicker">// autoevaluación</span>
+  <h2>Autoevaluación</h2>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 1 de 5</span>
+    <p class="sc-question">En el ejemplo de <code>acme-chasis/pom.xml</code>, ¿qué tienen en común todas las dependencias y plugins declarados ahí?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Todos están relacionados con el dominio de salud específicamente</button>
+      <button class="sc-option" data-correct="true">Ninguno menciona lógica de negocio — todos son elementos transversales de calidad y operación vistos en módulos anteriores</button>
+      <button class="sc-option" data-correct="false">Todos son plugins experimentales sin uso real en producción</button>
+      <button class="sc-option" data-correct="false">Todos requieren una licencia comercial de pago</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: esa ausencia deliberada de lógica de negocio es justo la línea que separa "chasis" de
+      "dominio" que se estableció en la página anterior.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 2 de 5</span>
+    <p class="sc-question">Cuando el equipo de plataforma mejora el chasis (por ejemplo, sube el umbral mínimo de cobertura), ¿qué deben hacer <code>salud-service</code>, <code>educacion-service</code> y <code>agricultura-service</code> para adoptar el cambio?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Nada — el cambio nunca les llega automáticamente</button>
+      <button class="sc-option" data-correct="true">Actualizar la versión del <code>&lt;parent&gt;</code> en su propio <code>pom.xml</code></button>
+      <button class="sc-option" data-correct="false">Reescribir su lógica de dominio desde cero</button>
+      <button class="sc-option" data-correct="false">Migrar a un lenguaje de programación distinto</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: esa es la ventaja concreta del chasis — una sola actualización de versión propaga la mejora
+      a todos los servicios que lo heredan, en vez de requerir un PR manual idéntico en cada repo.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 3 de 5</span>
+    <p class="sc-question">Según la tabla de "qué comparten / qué es único", ¿en qué columna cae la clase <code>Cosecha</code> de <code>agricultura-service</code>?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">En "qué comparten los tres" — es parte del chasis</button>
+      <button class="sc-option" data-correct="true">En "qué es único de cada uno" — es la lógica de dominio propia de ese servicio</button>
+      <button class="sc-option" data-correct="false">En ninguna de las dos, porque las entidades de dominio no se clasifican</button>
+      <button class="sc-option" data-correct="false">En ambas al mismo tiempo</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: las entidades de dominio (<code>Cita</code>, <code>Matricula</code>, <code>Cosecha</code>)
+      son exactamente lo que cada servicio agrega por encima del chasis — la parte que sí varía.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 4 de 5</span>
+    <p class="sc-question">Según la tabla de otros stacks, ¿cómo se vería un chasis en un proyecto Flutter/Dart, a diferencia del parent POM de Java?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Sería exactamente el mismo archivo <code>pom.xml</code>, sin cambios</button>
+      <button class="sc-option" data-correct="true">Un paquete pub interno con <code>analysis_options.yaml</code> base, cliente HTTP con trace ID incluido, y widgets de manejo de errores compartidos</button>
+      <button class="sc-option" data-correct="false">No es posible aplicar el patrón de chasis fuera de Java</button>
+      <button class="sc-option" data-correct="false">Un archivo de configuración de Kubernetes exclusivamente</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: el mecanismo concreto cambia según el ecosistema (paquete pub en vez de parent POM), pero el
+      principio —empaquetar las decisiones transversales una sola vez— es el mismo patrón.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 5 de 5</span>
+    <p class="sc-question">¿Este anexo y su checklist de exploración afectan la nota o el cronograma del curso?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Sí, es obligatorio completarlo antes del Módulo 8</button>
+      <button class="sc-option" data-correct="true">No — es material adicional opcional, sin fecha de corte ni impacto en la rúbrica de evaluación</button>
+      <button class="sc-option" data-correct="false">Sí, reemplaza el checklist de cierre del Módulo 7</button>
+      <button class="sc-option" data-correct="false">Solo afecta la nota si el proyecto final usa Java</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: como se indica al inicio del anexo anterior, este material es opcional y pensado para
+      quienes profundicen en microservicios por su cuenta o para el Proyecto Final — no cambia lo que ya
+      evalúan los Módulos 1-8.
+    </div>
+  </div>
+</section>
