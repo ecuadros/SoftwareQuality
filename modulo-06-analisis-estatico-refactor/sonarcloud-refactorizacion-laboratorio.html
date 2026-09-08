@@ -1,0 +1,233 @@
+---
+layout: lab
+title: "SonarCloud, Refactorización y Laboratorio"
+subtitle: "Detectar un code smell es barato. Lo caro es decidir cuál realmente vale la pena arreglar hoy."
+eyebrow: "Módulo 6 · Análisis Estático, Métricas y Refactorización"
+module: 6
+module_title: "Análisis Estático, Métricas y Refactorización"
+prev_url: "/modulo-06-analisis-estatico-refactor/linters-tres-stacks.html"
+prev_title: "Linters y analizadores en los tres stacks"
+---
+
+<nav class="demo-toc">
+  <a href="#sonarcloud">SonarCloud: un quality gate cross-language</a>
+  <a href="#catalogo-refactor">Catálogo breve de refactorización</a>
+  <a href="#mutation-testing">Mutation testing: probar a tus propios tests</a>
+  <a href="#laboratorio">Laboratorio: integra el linter al PR y refactoriza</a>
+  <a href="#checklist-cierre">Checklist de cierre — Módulo 6</a>
+  <a href="#autoevaluacion">Autoevaluación</a>
+</nav>
+
+<section class="demo-section" id="sonarcloud">
+  <span class="section-kicker">// un panel único para los tres stacks</span>
+  <h2>SonarCloud: un quality gate cross-language</h2>
+  <p>
+    Los linters del Módulo 6 (página anterior) corren por stack, dentro del pipeline de CI (Módulo 5).
+    <a href="https://sonarcloud.io/" target="_blank" rel="noopener">SonarCloud</a> agrega una capa encima:
+    un único dashboard que combina resultados de análisis estático, cobertura de tests y el índice SQALE
+    de deuda técnica (Módulo 1) — sin importar si el repo es Python, C++ o Flutter/Dart.
+  </p>
+  <div class="code-block">
+    <div class="code-block-label">.github/workflows/ci.yml — paso agregado al pipeline del Módulo 5</div>
+    <pre>      - name: Análisis SonarCloud
+        uses: SonarSource/sonarcloud-github-action@v3
+        env:
+          GITHUB_TOKEN: ${% raw %}{{ secrets.GITHUB_TOKEN }}{% endraw %}
+          SONAR_TOKEN: ${% raw %}{{ secrets.SONAR_TOKEN }}{% endraw %}</pre>
+  </div>
+  <p>
+    SonarCloud comenta directamente en el Pull Request qué código nuevo introduce problemas, y puede
+    configurarse como <strong>quality gate obligatorio</strong> (Módulo 5): un PR que empeora la cobertura o
+    introduce un code smell "bloqueante" no pasa el check requerido.
+  </p>
+  <div class="callout">
+    <strong>Regla práctica de SonarCloud: "Clean as You Code".</strong> No exige arreglar toda la deuda
+    técnica histórica del proyecto de una vez (inviable) — exige que el código <em>nuevo</em> de cada PR
+    cumpla el estándar. La deuda vieja se paga gradualmente, solo cuando se toca esa zona del código.
+  </div>
+</section>
+
+<section class="demo-section" id="catalogo-refactor">
+  <span class="section-kicker">// el remedio, no solo el diagnóstico</span>
+  <h2>Catálogo breve de refactorización</h2>
+  <p>
+    Refactorizar (Módulo 3: el paso "Refactor" del ciclo TDD) significa mejorar el diseño interno sin
+    cambiar el comportamiento observable — y cada code smell del catálogo anterior tiene una técnica
+    estándar asociada:
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Code smell</th><th>Técnica de refactor</th><th>Idea central</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Long Method</td><td><strong>Extract Method</strong></td><td>Partir la función grande en varias funciones pequeñas, cada una con un nombre que explica su propósito.</td></tr>
+        <tr><td>Duplicated Code</td><td><strong>Extract Function/Class</strong></td><td>Mover la lógica repetida a un solo lugar; todos los llamadores reusan esa versión única.</td></tr>
+        <tr><td>God Class</td><td><strong>Extract Class</strong></td><td>Separar responsabilidades distintas en clases distintas, cada una con un motivo de cambio.</td></tr>
+        <tr><td>Magic Numbers</td><td><strong>Replace Magic Number with Named Constant</strong></td><td><code>EDAD_MINIMA_LICENCIA = 17</code> en vez de un <code>17</code> suelto.</td></tr>
+        <tr><td>Condicionales anidados complejos</td><td><strong>Replace Conditional with Polymorphism</strong></td><td>Reemplazar una cadena larga de <code>if/elif</code> por clases que implementan el mismo método distinto.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout warn">
+    <strong>Regla de oro:</strong> nunca refactorices sin una suite de tests en verde cubriendo ese código
+    primero (Módulo 3). Refactorizar sin red de seguridad no es refactorizar — es reescribir a ciegas y
+    esperar que nada se rompa.
+  </div>
+</section>
+
+<section class="demo-section" id="mutation-testing">
+  <span class="section-kicker">// la promesa del módulo 3, cumplida</span>
+  <h2>Mutation testing: probar a tus propios tests</h2>
+  <p>
+    En el <strong>Módulo 3</strong> quedó pendiente: la cobertura de código no garantiza que las
+    aserciones sean rigurosas. El <strong>mutation testing</strong> resuelve exactamente eso: una
+    herramienta introduce pequeños cambios artificiales ("mutantes") en tu código — invierte un
+    <code>&gt;</code> por un <code>&lt;</code>, cambia un <code>+</code> por un <code>-</code> — y corre tu
+    suite de tests contra cada mutante.
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Resultado del mutante</th><th>Qué significa</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Mutante "muerto"</strong></td><td>Algún test falló al correr contra el código mutado — tus tests sí detectan ese tipo de error. Bien.</td></tr>
+        <tr><td><strong>Mutante "sobreviviente"</strong></td><td>Todos los tests siguieron pasando a pesar del cambio — tus aserciones no son lo suficientemente estrictas para notar la diferencia.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="code-block">
+    <div class="code-block-label">bash — herramientas por stack</div>
+    <pre><span class="cm"># Python</span>
+$ mutmut run
+
+<span class="cm"># C++</span>
+$ mull-runner ./build/tests
+
+<span class="cm"># Flutter/Dart</span>
+$ dart run mutation_test</pre>
+  </div>
+  <p>
+    Es una técnica costosa en tiempo de cómputo (corre la suite completa una vez por mutante), así que se
+    usa selectivamente: sobre módulos críticos, no sobre todo el repo en cada PR.
+  </p>
+</section>
+
+<section class="demo-section" id="laboratorio">
+  <span class="section-kicker">// laboratorio</span>
+  <h2>Laboratorio: integra el linter al PR y refactoriza</h2>
+  <div class="checklist" data-key="laboratorio-analisis-estatico">
+    <div class="checklist-header">
+      <span class="checklist-title">Pasos del laboratorio</span>
+      <span class="checklist-progress"></span>
+    </div>
+    <ul>
+      <li data-item="linter-en-ci"><input type="checkbox" id="l6-1" /><label for="l6-1">Agregaste el linter/analizador de tu stack como paso del pipeline de CI (Módulo 5).</label></li>
+      <li data-item="sonarcloud-conectado"><input type="checkbox" id="l6-2" /><label for="l6-2">Conectaste el repo a SonarCloud (o CodeClimate) y ves el dashboard con al menos una corrida real.</label></li>
+      <li data-item="smell-identificado"><input type="checkbox" id="l6-3" /><label for="l6-3">Identificaste al menos un code smell real en tu propio repo (no inventado) usando el linter o SonarCloud.</label></li>
+      <li data-item="refactor-con-tests"><input type="checkbox" id="l6-4" /><label for="l6-4">Refactorizaste ese smell con la suite de tests en verde antes y después del cambio.</label></li>
+      <li data-item="gate-configurado"><input type="checkbox" id="l6-5" /><label for="l6-5">Configuraste el análisis estático como parte del required status check, no como un paso informativo que se puede ignorar.</label></li>
+      <li data-item="pr-refactor"><input type="checkbox" id="l6-6" /><label for="l6-6">Abriste el PR del refactor siguiendo el flujo del Módulo 2, con revisión real.</label></li>
+    </ul>
+  </div>
+</section>
+
+<section class="demo-section" id="checklist-cierre">
+  <span class="section-kicker">// cierre del módulo 6</span>
+  <h2>Checklist de entrega — Módulo 6</h2>
+  <div class="checklist" data-key="entrega-modulo-6">
+    <div class="checklist-header">
+      <span class="checklist-title">Módulo 6 — listo para revisión</span>
+      <span class="checklist-progress"></span>
+    </div>
+    <ul>
+      <li data-item="linter-integrado"><input type="checkbox" id="ec6-1" /><label for="ec6-1">Linter/analizador del stack integrado al pipeline de CI como paso obligatorio.</label></li>
+      <li data-item="sonarcloud-activo"><input type="checkbox" id="ec6-2" /><label for="ec6-2">SonarCloud (o CodeClimate) conectado y reportando en cada PR.</label></li>
+      <li data-item="smell-corregido"><input type="checkbox" id="ec6-3" /><label for="ec6-3">Al menos un code smell real identificado y corregido con una técnica de refactor nombrada.</label></li>
+      <li data-item="sin-smells-bloqueantes"><input type="checkbox" id="ec6-4" /><label for="ec6-4">No quedan code smells "bloqueantes" (severidad alta) sobrevivientes en el código nuevo, según el quality gate.</label></li>
+      <li data-item="pr-revisado-m6"><input type="checkbox" id="ec6-5" /><label for="ec6-5">El PR del refactor fue revisado por otra persona, con comentarios sustanciales respondidos.</label></li>
+    </ul>
+  </div>
+</section>
+
+<section class="demo-section" id="autoevaluacion">
+  <span class="section-kicker">// autoevaluación</span>
+  <h2>Autoevaluación</h2>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 1 de 5</span>
+    <p class="sc-question">¿Qué agrega SonarCloud sobre lo que ya hacen los linters de cada stack corriendo en CI?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Reemplaza completamente a los linters, ya no hacen falta</button>
+      <button class="sc-option" data-correct="true">Un dashboard único que combina análisis estático, cobertura y deuda técnica sin importar el stack, más un quality gate configurable</button>
+      <button class="sc-option" data-correct="false">Solo funciona con proyectos de Python</button>
+      <button class="sc-option" data-correct="false">Ejecuta los tests unitarios en vez de que lo haga el pipeline de CI</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: SonarCloud consolida resultados cross-language en un solo panel y puede actuar como
+      required status check adicional, complementando (no reemplazando) los linters del Módulo 6.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 2 de 5</span>
+    <p class="sc-question">¿Qué significa la regla "Clean as You Code" de SonarCloud mencionada en esta página?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Que todo el código histórico del repo debe limpiarse antes del primer PR</button>
+      <button class="sc-option" data-correct="true">Que el estándar de calidad se exige sobre el código nuevo de cada PR, mientras la deuda técnica vieja se paga gradualmente</button>
+      <button class="sc-option" data-correct="false">Que solo se permite escribir código los lunes</button>
+      <button class="sc-option" data-correct="false">Que el linter debe correr antes de cada commit local, nunca en CI</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: exigir arreglar toda la deuda histórica de una vez es inviable en un proyecto real; "Clean
+      as You Code" hace que el estándar aplique al código nuevo, permitiendo adopción incremental.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 3 de 5</span>
+    <p class="sc-question">Según el catálogo de refactorización de esta página, ¿qué técnica corresponde al code smell "God Class"?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Replace Magic Number with Named Constant</button>
+      <button class="sc-option" data-correct="true">Extract Class, separando responsabilidades distintas en clases distintas</button>
+      <button class="sc-option" data-correct="false">Replace Conditional with Polymorphism</button>
+      <button class="sc-option" data-correct="false">Extract Method únicamente</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: una God Class concentra demasiadas responsabilidades; Extract Class separa cada
+      responsabilidad en su propia clase, cada una con un solo motivo de cambio.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 4 de 5</span>
+    <p class="sc-question">En mutation testing, ¿qué significa que un "mutante" haya sobrevivido a la suite de tests?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Que el código mutado no compiló</button>
+      <button class="sc-option" data-correct="true">Que todos los tests siguieron pasando a pesar del cambio artificial, revelando que las aserciones no son lo suficientemente estrictas</button>
+      <button class="sc-option" data-correct="false">Que el mutante mejoró el rendimiento del código</button>
+      <button class="sc-option" data-correct="false">Que la cobertura de código bajó a 0%</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: un mutante sobreviviente es la señal exacta de una aserción débil — el código cambió su
+      comportamiento y ningún test lo notó, justo el problema de cobertura sin rigor visto en el Módulo 3.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 5 de 5</span>
+    <p class="sc-question">Según la "regla de oro" de esta página, ¿qué debe existir antes de empezar a refactorizar un code smell detectado?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Una aprobación por escrito del profesor del curso</button>
+      <button class="sc-option" data-correct="true">Una suite de tests en verde que cubra ese código, para poder confirmar que el comportamiento no cambió</button>
+      <button class="sc-option" data-correct="false">Un reporte de mutation testing sin mutantes sobrevivientes</button>
+      <button class="sc-option" data-correct="false">Que SonarCloud esté desconectado temporalmente</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: refactorizar sin tests que confirmen que el comportamiento no cambió no es refactorizar,
+      es reescribir a ciegas — la red de seguridad de tests (Módulo 3) es lo que hace segura la mejora de
+      diseño.
+    </div>
+  </div>
+</section>

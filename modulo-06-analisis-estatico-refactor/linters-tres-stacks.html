@@ -1,0 +1,219 @@
+---
+layout: lab
+title: "Linters y Analizadores en los Tres Stacks"
+subtitle: "Cada ecosistema tiene su propia herramienta — pero todas responden la misma pregunta: ¿este código esconde un riesgo?"
+eyebrow: "Módulo 6 · Análisis Estático, Métricas y Refactorización"
+module: 6
+module_title: "Análisis Estático, Métricas y Refactorización"
+prev_url: "/modulo-06-analisis-estatico-refactor/analisis-estatico-code-smells.html"
+prev_title: "Análisis estático y code smells"
+next_url: "/modulo-06-analisis-estatico-refactor/sonarcloud-refactorizacion-laboratorio.html"
+next_title: "SonarCloud, refactorización y laboratorio"
+---
+
+<nav class="demo-toc">
+  <a href="#python-linters">Python — pylint y mypy</a>
+  <a href="#cpp-linters">C++ — clang-tidy y cppcheck</a>
+  <a href="#flutter-linters">Flutter/Dart — dart analyze y very_good_analysis</a>
+  <a href="#comparacion-linters">Lo que cada uno atrapa mejor</a>
+  <a href="#autoevaluacion">Autoevaluación</a>
+</nav>
+
+<section class="demo-section" id="python-linters">
+  <span class="section-kicker">// stack 1 de 3</span>
+  <h2>Python — pylint y mypy</h2>
+  <p>
+    Python es de tipado dinámico, así que dos herramientas cubren riesgos distintos: <code>pylint</code>
+    detecta code smells y errores de estilo; <code>mypy</code> verifica anotaciones de tipo <em>antes</em>
+    de ejecutar, algo que el intérprete no hace por sí solo.
+  </p>
+  <div class="code-block">
+    <div class="code-block-label">.pylintrc — configuración mínima</div>
+    <pre>[MESSAGES CONTROL]
+max-line-length=100
+
+[DESIGN]
+max-args=5
+max-branches=12   <span class="cm"># limita indirectamente la complejidad ciclomática (página anterior)</span></pre>
+  </div>
+  <div class="code-block">
+    <div class="code-block-label">bash</div>
+    <pre>$ pylint validador.py
+<span class="cm"># validador.py:12:0: R0912: Too many branches (13/12) (too-many-branches)</span>
+<span class="cm"># Your code has been rated at 8.42/10</span>
+
+$ mypy validador.py
+<span class="cm"># validador.py:5: error: Argument 1 to "es_valida" has incompatible type "int"; expected "str"</span></pre>
+  </div>
+  <div class="callout">
+    <code>mypy</code> atrapa una categoría entera de bugs (pasar un tipo equivocado) que en Python normal
+    solo aparecería como excepción en tiempo de ejecución — moviendo esa detección tan a la izquierda
+    (Módulo 1) como sea posible sin cambiar de lenguaje.
+  </div>
+</section>
+
+<section class="demo-section" id="cpp-linters">
+  <span class="section-kicker">// stack 2 de 3</span>
+  <h2>C++ — clang-tidy y cppcheck</h2>
+  <p>
+    En C++, el análisis estático hace un trabajo extra crítico: detectar patrones que llevan a
+    <strong>undefined behavior</strong> (memoria mal manejada, punteros colgantes) antes de que un
+    sanitizer o Valgrind (Módulo 7) los encuentre en tiempo de ejecución.
+  </p>
+  <div class="code-block">
+    <div class="code-block-label">.clang-tidy</div>
+    <pre>Checks: >
+  bugprone-*,
+  performance-*,
+  modernize-use-nullptr,
+  cppcoreguidelines-pro-type-member-init</pre>
+  </div>
+  <div class="code-block">
+    <div class="code-block-label">bash</div>
+    <pre>$ clang-tidy validador.cpp -- -std=c++17
+<span class="cm"># warning: variable 'resultado' is used uninitialized whenever 'if' condition is false</span>
+<span class="cm"># [clang-analyzer-core.uninitialized.Assign]</span>
+
+$ cppcheck --enable=warning,performance validador.cpp
+<span class="cm"># (warning) Possible null pointer dereference: ptr</span></pre>
+  </div>
+  <div class="callout warn">
+    Estas herramientas atrapan una clase de bug que <strong>no existe</strong> en Python ni en Dart
+    (ambos con recolector de basura y sin punteros crudos): memoria liberada dos veces, uso de memoria no
+    inicializada, punteros que apuntan a algo que ya no existe.
+  </div>
+</section>
+
+<section class="demo-section" id="flutter-linters">
+  <span class="section-kicker">// stack 3 de 3</span>
+  <h2>Flutter/Dart — dart analyze y very_good_analysis</h2>
+  <p>
+    Dart trae su analizador integrado (<code>dart analyze</code>); <code>very_good_analysis</code> es un
+    conjunto de reglas de lint más estricto que el conjunto por defecto, ampliamente adoptado en la
+    comunidad Flutter.
+  </p>
+  <div class="code-block">
+    <div class="code-block-label">analysis_options.yaml</div>
+    <pre>include: package:very_good_analysis/analysis_options.yaml
+
+linter:
+  rules:
+    public_member_api_docs: false   <span class="cm"># se puede afinar por proyecto</span></pre>
+  </div>
+  <div class="code-block">
+    <div class="code-block-label">bash</div>
+    <pre>$ flutter analyze
+<span class="cm"># warning - lib/validador.dart:8:7 - The value of the local variable 'tmp'
+#   is not used - unused_local_variable
+# info - lib/carrito.dart:22:1 - Missing documentation for a public member
+#   - public_member_api_docs</pre>
+  </div>
+  <div class="callout accent2">
+    <code>very_good_analysis</code> es intencionalmente más estricto que lo mínimo necesario para compilar
+    — el objetivo es atrapar en el analizador cosas que, en un equipo grande, terminarían siendo
+    comentarios repetidos de code review (Módulo 2) uno por uno.
+  </div>
+</section>
+
+<section class="demo-section" id="comparacion-linters">
+  <span class="section-kicker">// resumen</span>
+  <h2>Lo que cada uno atrapa mejor</h2>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Stack</th><th>Herramientas</th><th>Riesgo que atrapan mejor que los otros dos</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Python</strong></td><td>pylint + mypy</td><td>Errores de tipo que el intérprete dinámico no detectaría hasta ejecución.</td></tr>
+        <tr><td><strong>C++</strong></td><td>clang-tidy + cppcheck</td><td>Undefined behavior de memoria — categoría de bug que no existe en los otros dos stacks.</td></tr>
+        <tr><td><strong>Flutter/Dart</strong></td><td>dart analyze + very_good_analysis</td><td>Consistencia de estilo y patrones idiomáticos de widgets a escala de equipo grande.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Los tres, sin embargo, comparten la misma capacidad de detectar <strong>code smells genéricos</strong>
+    (funciones largas, alta complejidad ciclomática, código duplicado) vistos en la página anterior — esa
+    parte del catálogo es transferible entre lenguajes, aunque la sintaxis de configuración no lo sea.
+  </p>
+</section>
+
+<section class="demo-section" id="autoevaluacion">
+  <span class="section-kicker">// autoevaluación</span>
+  <h2>Autoevaluación</h2>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 1 de 5</span>
+    <p class="sc-question">¿Qué detecta específicamente <code>mypy</code> que <code>pylint</code> no está diseñado para detectar?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Código duplicado</button>
+      <button class="sc-option" data-correct="true">Incompatibilidades de tipo entre lo declarado y lo realmente pasado a una función</button>
+      <button class="sc-option" data-correct="false">Funciones demasiado largas</button>
+      <button class="sc-option" data-correct="false">Vulnerabilidades de seguridad conocidas</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: <code>mypy</code> es un verificador de tipos estático para un lenguaje dinámico — su
+      función específica es atrapar errores de tipo antes de que el código se ejecute.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 2 de 5</span>
+    <p class="sc-question">Según esta página, ¿qué categoría de bug atrapan clang-tidy y cppcheck en C++ que simplemente no existe como riesgo en Python o Dart?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Nombres de variable poco descriptivos</button>
+      <button class="sc-option" data-correct="true">Undefined behavior relacionado con memoria: uso de memoria no inicializada, punteros colgantes, doble liberación</button>
+      <button class="sc-option" data-correct="false">Funciones sin documentación</button>
+      <button class="sc-option" data-correct="false">Errores de indentación</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: Python y Dart usan recolector de basura y no exponen punteros crudos al programador, así
+      que esa categoría específica de riesgo de memoria simplemente no aplica ahí.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 3 de 5</span>
+    <p class="sc-question">¿Qué es <code>very_good_analysis</code> en el contexto de un proyecto Flutter?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Un framework alternativo a Flutter para construir UI</button>
+      <button class="sc-option" data-correct="true">Un conjunto de reglas de lint más estricto que el predeterminado de Dart, ampliamente adoptado en la comunidad</button>
+      <button class="sc-option" data-correct="false">Una herramienta de testing de widgets</button>
+      <button class="sc-option" data-correct="false">Un reemplazo de <code>flutter analyze</code></button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: se incluye vía <code>analysis_options.yaml</code> como un paquete de reglas adicionales
+      sobre <code>dart analyze</code>, no como una herramienta separada.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 4 de 5</span>
+    <p class="sc-question">Según la tabla de comparación, ¿qué tipo de análisis SÍ comparten los tres stacks, a pesar de usar herramientas distintas?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Detección de undefined behavior de memoria</button>
+      <button class="sc-option" data-correct="true">Detección de code smells genéricos: funciones largas, alta complejidad ciclomática, código duplicado</button>
+      <button class="sc-option" data-correct="false">Verificación de tipos estáticos idéntica en los tres</button>
+      <button class="sc-option" data-correct="false">Ninguno — cada stack detecta cosas completamente distintas</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: aunque la sintaxis de configuración cambia, el catálogo de code smells genéricos visto en
+      la página anterior es transferible y las tres familias de herramientas lo cubren de alguna forma.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 5 de 5</span>
+    <p class="sc-question">En el ejemplo de <code>.pylintrc</code> mostrado, ¿qué relación tiene <code>max-branches=12</code> con el contenido de la página anterior del módulo?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Ninguna, son conceptos completamente independientes</button>
+      <button class="sc-option" data-correct="true">Limita indirectamente la complejidad ciclomática de una función, marcando un warning si tiene demasiadas ramas</button>
+      <button class="sc-option" data-correct="false">Define cuántos archivos puede tener el proyecto</button>
+      <button class="sc-option" data-correct="false">Configura el umbral mínimo de cobertura de tests</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: cada rama (<code>if</code>, <code>for</code>, etc.) suma a la complejidad ciclomática vista
+      en la página anterior; limitar <code>max-branches</code> es una forma directa de que el linter avise
+      cuando esa métrica se sale de un rango razonable.
+    </div>
+  </div>
+</section>

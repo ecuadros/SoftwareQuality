@@ -1,0 +1,222 @@
+---
+layout: lab
+title: "Versionado Semántico, Despliegue y Laboratorio"
+subtitle: "Un número de versión debería contarte, sin leer el código, si algo se puede romper al actualizar."
+eyebrow: "Módulo 5 · Integración y Entrega Continua (CI/CD)"
+module: 5
+module_title: "Integración y Entrega Continua (CI/CD)"
+prev_url: "/modulo-05-ci-cd/pipelines-github-actions-tres-stacks.html"
+prev_title: "Pipelines de GitHub Actions en los tres stacks"
+next_url: "/modulo-06-analisis-estatico-refactor/analisis-estatico-code-smells.html"
+next_title: "Análisis estático y code smells"
+---
+
+<nav class="demo-toc">
+  <a href="#versionado-semantico">Versionado semántico</a>
+  <a href="#commits-a-version">De Conventional Commits a la versión automática</a>
+  <a href="#estrategias-despliegue">Estrategias de despliegue (panorama)</a>
+  <a href="#laboratorio">Laboratorio: tu propio pipeline de CI</a>
+  <a href="#checklist-cierre">Checklist de cierre — Módulo 5</a>
+  <a href="#autoevaluacion">Autoevaluación</a>
+</nav>
+
+<section class="demo-section" id="versionado-semantico">
+  <span class="section-kicker">// un número que comunica</span>
+  <h2>Versionado semántico (SemVer)</h2>
+  <p>
+    <a href="https://semver.org/" target="_blank" rel="noopener">Semantic Versioning</a> le da significado
+    a un número de versión <code>MAYOR.MENOR.PARCHE</code> (ej. <code>2.4.1</code>), en vez de que sea un
+    contador arbitrario:
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Componente</th><th>Cuándo sube</th><th>Ejemplo</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>MAYOR</strong></td><td>Cambio incompatible con versiones anteriores (breaking change).</td><td>Se elimina un parámetro de una función pública que otros ya usan.</td></tr>
+        <tr><td><strong>MENOR</strong></td><td>Funcionalidad nueva, compatible con lo existente.</td><td>Se agrega un nuevo endpoint sin tocar los anteriores.</td></tr>
+        <tr><td><strong>PARCHE</strong></td><td>Corrección de bug, compatible.</td><td>Se corrige un cálculo mal hecho, la interfaz no cambia.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    Quien consume tu software (otro equipo, una librería que instalas con <code>pip</code>/<code>pub</code>)
+    decide si actualizar mirando solo el número — sin leer un changelog. Eso solo funciona si el número
+    realmente refleja el tipo de cambio, de forma disciplinada y consistente.
+  </div>
+</section>
+
+<section class="demo-section" id="commits-a-version">
+  <span class="section-kicker">// automatizar la decisión</span>
+  <h2>De Conventional Commits a la versión automática</h2>
+  <p>
+    En el <strong>Módulo 2</strong> viste Conventional Commits como buena práctica de historial legible.
+    Aquí es donde paga el resto de la inversión: si cada commit está etiquetado consistentemente, una
+    herramienta puede calcular la siguiente versión <strong>sin que nadie la decida a mano</strong>.
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Tipo de commit desde el último release</th><th>Componente que sube</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>fix: ...</code></td><td>PARCHE</td></tr>
+        <tr><td><code>feat: ...</code></td><td>MENOR</td></tr>
+        <tr><td>Cualquier commit con <code>BREAKING CHANGE:</code> en el cuerpo</td><td>MAYOR</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="code-block">
+    <div class="code-block-label">bash — herramientas típicas por ecosistema</div>
+    <pre><span class="cm"># Python / genérico</span>
+$ npx semantic-release   <span class="cm"># o python-semantic-release, según el proyecto</span>
+
+<span class="cm"># calcula la versión, genera el changelog, crea el tag y el release de GitHub</span>
+<span class="cm"># — todo disparado desde el mismo pipeline de CI de este módulo</span></pre>
+  </div>
+</section>
+
+<section class="demo-section" id="estrategias-despliegue">
+  <span class="section-kicker">// panorama, no hands-on</span>
+  <h2>Estrategias de despliegue (panorama)</h2>
+  <p>
+    El proyecto de este curso no requiere infraestructura de producción real, pero conviene reconocer estas
+    estrategias — las vas a encontrar en cualquier equipo real:
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Estrategia</th><th>Cómo funciona</th><th>Riesgo si algo falla</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Recreate</strong></td><td>Apaga la versión vieja, despliega la nueva.</td><td>Downtime durante el cambio.</td></tr>
+        <tr><td><strong>Rolling</strong></td><td>Reemplaza instancias de la versión vieja por la nueva, una por una.</td><td>Ambas versiones conviven brevemente — deben ser compatibles entre sí.</td></tr>
+        <tr><td><strong>Blue-Green</strong></td><td>Despliega la nueva versión en paralelo ("green"); se cambia el tráfico de golpe cuando está lista.</td><td>Requiere el doble de infraestructura mientras dura el cambio.</td></tr>
+        <tr><td><strong>Canary</strong></td><td>La nueva versión recibe solo un pequeño % del tráfico real al inicio, se aumenta gradualmente.</td><td>Detecta problemas con impacto limitado, pero requiere buena observabilidad (Módulo 7) para decidir cuándo avanzar.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="demo-section" id="laboratorio">
+  <span class="section-kicker">// laboratorio</span>
+  <h2>Laboratorio: tu propio pipeline de CI</h2>
+  <p>Sobre tu repo real, implementa el pipeline correspondiente a tu stack (o los tres, si trabajas en paralelo) y conéctalo de verdad a branch protection.</p>
+
+  <div class="checklist" data-key="laboratorio-ci">
+    <div class="checklist-header">
+      <span class="checklist-title">Pasos del laboratorio</span>
+      <span class="checklist-progress"></span>
+    </div>
+    <ul>
+      <li data-item="workflow-creado"><input type="checkbox" id="l5-1" /><label for="l5-1">Creaste <code>.github/workflows/ci.yml</code> con checkout, dependencias, build (si aplica) y tests.</label></li>
+      <li data-item="corre-en-pr"><input type="checkbox" id="l5-2" /><label for="l5-2">Verificaste que el workflow corre automáticamente al abrir un PR, no solo al hacer push a <code>main</code>.</label></li>
+      <li data-item="gate-cobertura"><input type="checkbox" id="l5-3" /><label for="l5-3">Agregaste un umbral mínimo de cobertura que hace fallar el pipeline si no se cumple.</label></li>
+      <li data-item="required-check"><input type="checkbox" id="l5-4" /><label for="l5-4">Marcaste ese workflow como <em>required status check</em> en branch protection (Módulo 1) — el merge debe bloquearse si falla.</label></li>
+      <li data-item="pr-bloqueado-probado"><input type="checkbox" id="l5-5" /><label for="l5-5">Probaste el bloqueo real: abriste un PR con un test roto a propósito y confirmaste que GitHub impide el merge.</label></li>
+      <li data-item="conventional-commits-consistentes"><input type="checkbox" id="l5-6" /><label for="l5-6">Tu historial de commits sigue siendo consistente con Conventional Commits (Módulo 2), listo para versionado automático.</label></li>
+    </ul>
+  </div>
+</section>
+
+<section class="demo-section" id="checklist-cierre">
+  <span class="section-kicker">// cierre del módulo 5</span>
+  <h2>Checklist de entrega — Módulo 5</h2>
+  <div class="checklist" data-key="entrega-modulo-5">
+    <div class="checklist-header">
+      <span class="checklist-title">Módulo 5 — listo para revisión</span>
+      <span class="checklist-progress"></span>
+    </div>
+    <ul>
+      <li data-item="pipeline-funcional"><input type="checkbox" id="ec5-1" /><label for="ec5-1">Pipeline de GitHub Actions presente y corriendo en verde en el stack elegido.</label></li>
+      <li data-item="gate-obligatorio"><input type="checkbox" id="ec5-2" /><label for="ec5-2">El pipeline es un required status check real: un PR con el pipeline en rojo no puede fusionarse.</label></li>
+      <li data-item="cobertura-en-ci"><input type="checkbox" id="ec5-3" /><label for="ec5-3">El pipeline reporta y verifica un umbral mínimo de cobertura.</label></li>
+      <li data-item="evidencia-bloqueo"><input type="checkbox" id="ec5-4" /><label for="ec5-4">Existe evidencia (un PR de prueba, aunque se haya cerrado sin fusionar) de que el gate bloqueó un merge real.</label></li>
+      <li data-item="historial-conventional"><input type="checkbox" id="ec5-5" /><label for="ec5-5">El historial de commits sigue Conventional Commits de forma consistente, listo para versionado semántico.</label></li>
+    </ul>
+  </div>
+</section>
+
+<section class="demo-section" id="autoevaluacion">
+  <span class="section-kicker">// autoevaluación</span>
+  <h2>Autoevaluación</h2>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 1 de 5</span>
+    <p class="sc-question">Un equipo elimina un parámetro de una función pública que otros equipos ya consumen. Según SemVer, ¿qué componente de la versión debe subir?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">PARCHE</button>
+      <button class="sc-option" data-correct="false">MENOR</button>
+      <button class="sc-option" data-correct="true">MAYOR</button>
+      <button class="sc-option" data-correct="false">Ninguno, no es necesario cambiar la versión</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: eliminar un parámetro rompe la compatibilidad con código que ya lo usaba — es exactamente
+      la definición de un cambio MAYOR (breaking change) en SemVer.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 2 de 5</span>
+    <p class="sc-question">¿Qué hace posible calcular automáticamente la siguiente versión semántica sin que una persona la decida a mano?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Que el repositorio sea público</button>
+      <button class="sc-option" data-correct="true">Que el historial de commits siga Conventional Commits de forma consistente</button>
+      <button class="sc-option" data-correct="false">Que el proyecto tenga más de 100 commits</button>
+      <button class="sc-option" data-correct="false">Que se use exclusivamente GitHub Actions</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: herramientas como <code>semantic-release</code> leen el tipo de cada commit
+      (<code>feat</code>, <code>fix</code>, <code>BREAKING CHANGE</code>) desde el último release para
+      calcular el siguiente número de versión — sin ese historial disciplinado, no tienen de dónde inferirlo.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 3 de 5</span>
+    <p class="sc-question">Según la tabla de estrategias de despliegue, ¿cuál despliega la nueva versión a solo un pequeño porcentaje del tráfico real antes de expandirla?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Recreate</button>
+      <button class="sc-option" data-correct="false">Rolling</button>
+      <button class="sc-option" data-correct="false">Blue-Green</button>
+      <button class="sc-option" data-correct="true">Canary</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: Canary limita el impacto de un problema exponiendo la nueva versión a una fracción pequeña
+      del tráfico primero — pero requiere buena observabilidad (Módulo 7) para decidir cuándo es seguro
+      avanzar.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 4 de 5</span>
+    <p class="sc-question">En el laboratorio de esta página, ¿qué prueba concreta demuestra que el quality gate de CI realmente bloquea merges, y no solo "reporta" un estado?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Que el pipeline tarde menos de 2 minutos en correr</button>
+      <button class="sc-option" data-correct="true">Abrir un PR con un test roto a propósito y confirmar que GitHub impide el merge mientras el check esté en rojo</button>
+      <button class="sc-option" data-correct="false">Que el archivo YAML no tenga errores de sintaxis</button>
+      <button class="sc-option" data-correct="false">Que el repositorio tenga más de un colaborador</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: solo probar el bloqueo real (un PR que debería fallar y efectivamente no se puede fusionar)
+      confirma que el required status check está conectado de verdad a branch protection, no solo
+      configurado en el YAML.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 5 de 5</span>
+    <p class="sc-question">Un equipo usa Rolling deployment. Según lo visto en esta página, ¿qué requisito deben cumplir la versión vieja y la nueva mientras conviven durante el despliegue?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Deben tener exactamente el mismo número de versión</button>
+      <button class="sc-option" data-correct="true">Deben ser compatibles entre sí, ya que ambas atienden tráfico real al mismo tiempo</button>
+      <button class="sc-option" data-correct="false">La versión vieja debe apagarse antes de que la nueva reciba tráfico</button>
+      <button class="sc-option" data-correct="false">No hay ningún requisito de compatibilidad entre ambas</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: a diferencia de Recreate (que apaga todo antes de desplegar), en Rolling ambas versiones
+      sirven tráfico real simultáneamente durante la transición, por lo que deben ser compatibles.
+    </div>
+  </div>
+</section>

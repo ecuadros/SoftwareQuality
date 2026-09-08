@@ -1,0 +1,189 @@
+---
+layout: lab
+title: "Fundamentos de Integración y Entrega Continua (CI/CD)"
+subtitle: "\"En mi máquina funciona\" es la frase que CI existe para volver irrelevante."
+eyebrow: "Módulo 5 · Integración y Entrega Continua (CI/CD)"
+module: 5
+module_title: "Integración y Entrega Continua (CI/CD)"
+prev_url: "/modulo-04-integracion-e2e-bdd/suite-e2e-laboratorio.html"
+prev_title: "Suite E2E, laboratorio y checklist de cierre"
+next_url: "/modulo-05-ci-cd/pipelines-github-actions-tres-stacks.html"
+next_title: "Pipelines de GitHub Actions en los tres stacks"
+---
+
+<nav class="demo-toc">
+  <a href="#el-problema">"En mi máquina funciona"</a>
+  <a href="#ci-vs-cd">Integración continua vs. entrega/despliegue continuo</a>
+  <a href="#anatomia-pipeline">Anatomía de un pipeline</a>
+  <a href="#quality-gates">Quality gates: el CI que por fin llena la regla del Módulo 1</a>
+  <a href="#autoevaluacion">Autoevaluación</a>
+</nav>
+
+<section class="demo-section" id="el-problema">
+  <span class="section-kicker">// el problema</span>
+  <h2>"En mi máquina funciona"</h2>
+  <p>
+    Un desarrollador corre sus tests localmente, todos en verde, hace merge a <code>main</code>. Dos horas
+    después, un compañero hace <code>git pull</code> para empezar su día y su build falla: la versión de
+    una dependencia que el primer desarrollador tenía instalada localmente (pero nunca declaró en el
+    archivo de dependencias) no coincide con la que se resuelve limpia. El código nunca estuvo realmente
+    probado en un entorno limpio — solo en la máquina de una persona, con su historial acumulado de
+    instalaciones manuales.
+  </p>
+  <div class="callout warn">
+    <strong>El costo real:</strong> no es solo la hora perdida del compañero. Es que <code>main</code>
+    quedó roto para <em>todo el equipo</em> hasta que alguien lo detecta y corrige — y branch protection
+    (Módulo 1) no puede evitarlo si nadie corrió los tests en un entorno controlado antes del merge.
+  </div>
+  <p>
+    <strong>Integración Continua (CI)</strong> resuelve esto ejecutando build y tests automáticamente, en
+    un entorno limpio e idéntico cada vez, en cada push y cada Pull Request — antes de que el código llegue
+    a <code>main</code>, no después.
+  </p>
+</section>
+
+<section class="demo-section" id="ci-vs-cd">
+  <span class="section-kicker">// vocabulario que se confunde seguido</span>
+  <h2>Integración continua vs. entrega/despliegue continuo</h2>
+  <p>
+    "CI/CD" junta tres prácticas relacionadas pero distintas. Distinguirlas importa porque cada una
+    resuelve un riesgo diferente:
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Práctica</th><th>Qué automatiza</th><th>Pregunta que responde</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Continuous Integration (CI)</strong></td><td>Build + suite de tests en cada push/PR.</td><td>¿Este cambio rompe algo, en un entorno limpio?</td></tr>
+        <tr><td><strong>Continuous Delivery</strong></td><td>Empaquetar y dejar el artefacto listo para desplegar en cualquier momento, con un clic humano.</td><td>¿Podríamos desplegar esto ahora mismo, si quisiéramos?</td></tr>
+        <tr><td><strong>Continuous Deployment</strong></td><td>Despliegue automático a producción si todo pasa, sin intervención humana.</td><td>¿Cada cambio que pasa el pipeline llega solo a producción?</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <strong>Para el proyecto de este curso:</strong> el foco es <strong>CI</strong> — es la base sin la cual
+    las otras dos no tienen sentido, y es lo que vas a construir de verdad en este módulo. Delivery/Deployment
+    automático son la extensión natural una vez que confías en tu pipeline de CI.
+  </div>
+</section>
+
+<section class="demo-section" id="anatomia-pipeline">
+  <span class="section-kicker">// las piezas</span>
+  <h2>Anatomía de un pipeline</h2>
+  <p>
+    Sin importar el stack, un pipeline de CI encadena las mismas etapas conceptuales, cada una fallando
+    rápido si algo está mal (<em>fail fast</em>) para no gastar minutos de cómputo en pasos posteriores
+    inútiles:
+  </p>
+  <ol style="margin: 0 0 1rem 1.25rem; color: var(--muted); line-height: 1.9;">
+    <li><strong style="color:var(--text)">Checkout.</strong> Clona el commit exacto que disparó el pipeline.</li>
+    <li><strong style="color:var(--text)">Instalar dependencias.</strong> Desde cero, en un entorno limpio — nunca reusando el caché "sucio" de una máquina local.</li>
+    <li><strong style="color:var(--text)">Build.</strong> Compilar (C++), o simplemente verificar que el proyecto importa/arranca sin errores (Python, Dart).</li>
+    <li><strong style="color:var(--text)">Test.</strong> Correr la suite completa: unitarios (Módulo 3), integración y BDD (Módulo 4).</li>
+    <li><strong style="color:var(--text)">Análisis y cobertura.</strong> Linter, cobertura mínima — el Módulo 6 profundiza esta etapa.</li>
+    <li><strong style="color:var(--text)">(Opcional) Deploy.</strong> Solo si todo lo anterior pasó.</li>
+  </ol>
+</section>
+
+<section class="demo-section" id="quality-gates">
+  <span class="section-kicker">// donde por fin se activa la regla del módulo 1</span>
+  <h2>Quality gates: el CI que por fin llena la regla del Módulo 1</h2>
+  <p>
+    En el <strong>Módulo 1</strong> activaste <code>Require status checks to pass before merging</code> en
+    branch protection, sabiendo que quedaría vacío hasta este módulo. Un <strong>quality gate</strong> es
+    exactamente eso: una condición automática (tests en verde, cobertura mínima, cero vulnerabilidades
+    críticas) que un PR debe cumplir antes de poder fusionarse — GitHub la marca como
+    <em>required check</em> y el botón de merge queda bloqueado hasta que pasa.
+  </p>
+  <div class="callout accent2">
+    Esta es la diferencia entre "tenemos tests" y "los tests <em>importan</em>": si un PR puede fusionarse
+    con tests en rojo, la suite es decorativa. El quality gate es lo que hace la disciplina de calidad
+    obligatoria por herramienta, no por buena voluntad — el mismo principio que branch protection y
+    CODEOWNERS en el Módulo 2.
+  </div>
+</section>
+
+<section class="demo-section" id="autoevaluacion">
+  <span class="section-kicker">// autoevaluación</span>
+  <h2>Autoevaluación</h2>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 1 de 5</span>
+    <p class="sc-question">
+      En el ejemplo de "en mi máquina funciona" de esta página, ¿cuál fue la causa raíz de que <code>main</code> quedara roto?
+    </p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">El compañero no sabía usar Git</button>
+      <button class="sc-option" data-correct="true">El código nunca se probó en un entorno limpio; dependía de instalaciones acumuladas en una sola máquina</button>
+      <button class="sc-option" data-correct="false">El repositorio no tenía plantillas de PR</button>
+      <button class="sc-option" data-correct="false">Faltaba un archivo .editorconfig</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: la suite pasó localmente porque la máquina tenía un estado no declarado (una versión de
+      dependencia instalada manualmente). Sin un entorno limpio y reproducible, "pasa en mi máquina" no
+      garantiza nada sobre otros entornos.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 2 de 5</span>
+    <p class="sc-question">¿Cuál es la diferencia principal entre Continuous Delivery y Continuous Deployment?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">No hay ninguna diferencia, son sinónimos</button>
+      <button class="sc-option" data-correct="true">Delivery deja el artefacto listo para desplegar con un clic humano; Deployment despliega automáticamente sin intervención</button>
+      <button class="sc-option" data-correct="false">Delivery no incluye tests, Deployment sí</button>
+      <button class="sc-option" data-correct="false">Deployment es exclusivo de aplicaciones móviles</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: ambos automatizan el empaquetado del artefacto; la diferencia está en si el último paso a
+      producción requiere una decisión humana (Delivery) o es completamente automático (Deployment).
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 3 de 5</span>
+    <p class="sc-question">Según la anatomía de un pipeline descrita en esta página, ¿por qué es importante que las etapas fallen rápido ("fail fast")?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Porque GitHub Actions cobra por etapa ejecutada</button>
+      <button class="sc-option" data-correct="true">Para no gastar minutos de cómputo en etapas posteriores cuando una etapa temprana ya reveló un problema</button>
+      <button class="sc-option" data-correct="false">Porque las etapas posteriores no pueden ejecutarse en paralelo</button>
+      <button class="sc-option" data-correct="false">Porque el deploy siempre debe ser la primera etapa</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: si el build falla, no tiene sentido correr tests sobre un binario que no compiló; fallar
+      rápido ahorra tiempo y hace más claro dónde está el problema.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 4 de 5</span>
+    <p class="sc-question">¿Qué regla de branch protection, activada desde el Módulo 1, es la que un quality gate de CI termina de habilitar?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false"><code>Require a pull request before merging</code></button>
+      <button class="sc-option" data-correct="true"><code>Require status checks to pass before merging</code></button>
+      <button class="sc-option" data-correct="false"><code>Require approvals</code></button>
+      <button class="sc-option" data-correct="false">Bloqueo de force pushes</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: esa regla quedó activada pero vacía en el Módulo 1 porque no existía ningún pipeline que
+      reportara un check. El pipeline de este módulo es lo que finalmente la llena de contenido real.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 5 de 5</span>
+    <p class="sc-question">¿Por qué se dice que un quality gate hace la disciplina de calidad "obligatoria por herramienta y no por buena voluntad"?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Porque elimina la necesidad de escribir tests</button>
+      <button class="sc-option" data-correct="true">Porque bloquea técnicamente el botón de merge si el PR no cumple la condición, sin depender de que alguien recuerde revisarlo</button>
+      <button class="sc-option" data-correct="false">Porque solo lo pueden configurar administradores del repositorio</button>
+      <button class="sc-option" data-correct="false">Porque corre una sola vez, al crear el repositorio</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: es el mismo principio de branch protection y CODEOWNERS del Módulo 2 — la calidad se
+      protege con un mecanismo automático, no confiando en que cada persona recuerde correr los tests antes
+      de fusionar.
+    </div>
+  </div>
+</section>

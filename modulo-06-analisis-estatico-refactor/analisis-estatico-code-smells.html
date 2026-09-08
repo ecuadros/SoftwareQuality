@@ -1,0 +1,210 @@
+---
+layout: lab
+title: "Análisis Estático y Code Smells"
+subtitle: "Un code smell no es un bug — es una señal de que un bug se está poniendo fácil de escribir."
+eyebrow: "Módulo 6 · Análisis Estático, Métricas y Refactorización"
+module: 6
+module_title: "Análisis Estático, Métricas y Refactorización"
+prev_url: "/modulo-05-ci-cd/versionado-despliegue-laboratorio.html"
+prev_title: "Versionado semántico, despliegue y laboratorio"
+next_url: "/modulo-06-analisis-estatico-refactor/linters-tres-stacks.html"
+next_title: "Linters y analizadores en los tres stacks"
+---
+
+<nav class="demo-toc">
+  <a href="#el-problema">La función de 800 líneas que nadie quería tocar</a>
+  <a href="#que-es-analisis-estatico">Qué es el análisis estático</a>
+  <a href="#code-smells">Catálogo breve de code smells</a>
+  <a href="#complejidad-ciclomatica">Complejidad ciclomática</a>
+  <a href="#autoevaluacion">Autoevaluación</a>
+</nav>
+
+<section class="demo-section" id="el-problema">
+  <span class="section-kicker">// el problema, tercera vez que aparece</span>
+  <h2>La función de 800 líneas que nadie quería tocar</h2>
+  <p>
+    En el <strong>Módulo 1</strong> viste el ejemplo de mantenibilidad: "una función de 800 líneas que
+    nadie se anima a tocar". Pasa el tiempo: alguien finalmente necesita agregar un caso más, la modifica
+    con cuidado, corre los tests (Módulo 3) y todos pasan. Se hace merge. Una semana después aparece un bug
+    en un caso completamente distinto de esa misma función — nadie notó que la nueva rama de código
+    interactuaba con una condición que estaba a 400 líneas de distancia, dentro del mismo bloque gigante.
+  </p>
+  <div class="callout warn">
+    <strong>Los tests no fallaron porque nadie escribió un test para esa combinación específica</strong> —
+    y en una función de 800 líneas con decenas de condiciones anidadas, es prácticamente imposible que
+    alguien piense en todas las combinaciones. El problema real no era el bug puntual: era que el
+    <em>diseño</em> del código hacía inevitable que apareciera uno tarde o temprano.
+  </div>
+  <p>
+    El análisis estático ataca exactamente esto: detecta las condiciones de diseño que hacen que los bugs
+    sean fáciles de introducir, <strong>antes</strong> de que aparezca el bug — sin ejecutar el programa,
+    solo examinando su estructura.
+  </p>
+</section>
+
+<section class="demo-section" id="que-es-analisis-estatico">
+  <span class="section-kicker">// vocabulario</span>
+  <h2>Qué es el análisis estático</h2>
+  <p>
+    Un <strong>analizador estático</strong> examina el código fuente sin ejecutarlo, buscando patrones
+    conocidos como riesgosos: variables no usadas, funciones demasiado largas o complejas, código
+    duplicado, tipos incompatibles, vulnerabilidades conocidas. Es complementario a los tests, no un
+    sustituto:
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th></th><th>Tests (Módulos 3-4)</th><th>Análisis estático</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Ejecuta el código</strong></td><td>Sí</td><td>No</td></tr>
+        <tr><td><strong>Verifica</strong></td><td>Comportamiento observable para casos específicos</td><td>Estructura y patrones del código, para todos los casos a la vez</td></tr>
+        <tr><td><strong>Detecta</strong></td><td>"Esta función devuelve el resultado equivocado para este input"</td><td>"Esta función es tan compleja que es difícil garantizar que esté bien para todos los inputs"</td></tr>
+        <tr><td><strong>Requiere</strong></td><td>Que alguien haya pensado en ese caso de prueba</td><td>Solo que exista el código — no requiere imaginar casos</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="demo-section" id="code-smells">
+  <span class="section-kicker">// nombrar el problema</span>
+  <h2>Catálogo breve de code smells</h2>
+  <p>
+    Un <strong>code smell</strong> (Martin Fowler / Kent Beck) es un síntoma superficial de un problema de
+    diseño más profundo — no rompe el programa hoy, pero predice dificultad para mantenerlo mañana.
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Code smell</th><th>Señal</th><th>Riesgo que anticipa</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Long Method</strong></td><td>Una función de cientos de líneas, como la del ejemplo inicial.</td><td>Casos límite ocultos, difícil de testear exhaustivamente.</td></tr>
+        <tr><td><strong>Duplicated Code</strong></td><td>El mismo bloque de lógica copiado en varios lugares.</td><td>Corriges el bug en una copia y lo olvidas en las otras.</td></tr>
+        <tr><td><strong>God Class</strong></td><td>Una clase que hace de todo: valida, calcula, persiste, notifica.</td><td>Cualquier cambio en cualquier responsabilidad obliga a tocar esa clase.</td></tr>
+        <tr><td><strong>Feature Envy</strong></td><td>Un método que usa más los datos de otra clase que los propios.</td><td>La responsabilidad está en el lugar equivocado — señal de mal acoplamiento.</td></tr>
+        <tr><td><strong>Magic Numbers</strong></td><td>Literales sin nombre en medio del código (<code>if edad &gt; 17</code>).</td><td>Nadie sabe si <code>17</code> es una regla de negocio importante o un valor arbitrario.</td></tr>
+        <tr><td><strong>Dead Code</strong></td><td>Código que ya no se ejecuta nunca, pero sigue en el repo.</td><td>Confunde a quien lee, y a veces esconde bugs "reactivados" sin querer.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="demo-section" id="complejidad-ciclomatica">
+  <span class="section-kicker">// ponerle un número al smell</span>
+  <h2>Complejidad ciclomática: medir "Long Method" con un número</h2>
+  <p>
+    La <strong>complejidad ciclomática</strong> (Thomas McCabe, 1976) cuenta la cantidad de caminos
+    independientes que puede tomar una función: cada <code>if</code>, <code>for</code>, <code>while</code>,
+    <code>case</code> o condición lógica adicional suma uno. Una función sin ninguna bifurcación tiene
+    complejidad 1.
+  </p>
+  <div class="code-block">
+    <div class="code-block-label">ejemplo — complejidad ciclomática = 4</div>
+    <pre>def clasificar_envio(peso, es_urgente, destino_internacional):
+    if peso > 30:                        <span class="cm"># +1</span>
+        return "carga_pesada"
+    if es_urgente:                       <span class="cm"># +1</span>
+        return "urgente"
+    if destino_internacional:            <span class="cm"># +1</span>
+        return "internacional"
+    return "estandar"                    <span class="cm"># base = 1</span></pre>
+  </div>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Complejidad ciclomática</th><th>Interpretación</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1-10</td><td>Simple, fácil de testear con pocos casos.</td></tr>
+        <tr><td>11-20</td><td>Moderada — vale la pena revisar si se puede simplificar.</td></tr>
+        <tr><td>&gt; 20</td><td>Alta — el número de casos de prueba necesarios para cubrir todos los caminos crece rápido; candidata fuerte a refactor (siguiente página).</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout accent2">
+    El número no es un juicio moral sobre quien escribió el código — es una señal objetiva y barata de
+    calcular para decidir <em>dónde</em> mirar primero quien va a refactorizar, en vez de adivinar.
+  </div>
+</section>
+
+<section class="demo-section" id="autoevaluacion">
+  <span class="section-kicker">// autoevaluación</span>
+  <h2>Autoevaluación</h2>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 1 de 5</span>
+    <p class="sc-question">En el ejemplo de la función de 800 líneas, ¿por qué los tests unitarios existentes no atraparon el nuevo bug?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Porque los tests estaban mal escritos técnicamente</button>
+      <button class="sc-option" data-correct="true">Porque nadie había pensado en probar esa combinación específica de condiciones, dado lo difícil que es razonar sobre una función tan grande</button>
+      <button class="sc-option" data-correct="false">Porque el pipeline de CI no estaba configurado</button>
+      <button class="sc-option" data-correct="false">Porque la función no tenía ningún test</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: los tests solo cubren los casos que alguien imaginó. Una función con muchas condiciones
+      anidadas hace prácticamente imposible imaginar todas las combinaciones relevantes — ese es
+      precisamente el riesgo que el análisis estático puede señalar sin necesidad de imaginar casos.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 2 de 5</span>
+    <p class="sc-question">¿Cuál es la diferencia clave entre lo que verifican los tests y lo que verifica el análisis estático?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">El análisis estático también ejecuta el código, solo que más rápido</button>
+      <button class="sc-option" data-correct="true">Los tests verifican comportamiento para casos específicos que alguien pensó; el análisis estático examina la estructura del código sin ejecutarlo, sin necesidad de casos específicos</button>
+      <button class="sc-option" data-correct="false">No hay diferencia real, son la misma técnica con nombres distintos</button>
+      <button class="sc-option" data-correct="false">El análisis estático solo funciona en C++</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: son complementarios — uno verifica comportamiento observado en casos concretos, el otro
+      examina patrones de diseño riesgosos en todo el código, sin necesidad de ejecutar nada.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 3 de 5</span>
+    <p class="sc-question">Un método casi no usa los atributos de su propia clase, pero constantemente llama y opera sobre los datos de otra clase distinta. ¿Qué code smell describe mejor esta situación?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Magic Numbers</button>
+      <button class="sc-option" data-correct="false">Dead Code</button>
+      <button class="sc-option" data-correct="true">Feature Envy</button>
+      <button class="sc-option" data-correct="false">Duplicated Code</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: Feature Envy señala que la responsabilidad de ese método probablemente pertenece a la otra
+      clase, cuyos datos usa más — es una pista de mal acoplamiento.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 4 de 5</span>
+    <p class="sc-question">Según el ejemplo de <code>clasificar_envio</code>, ¿cuál es su complejidad ciclomática y por qué?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">1, porque solo tiene un <code>return</code> final</button>
+      <button class="sc-option" data-correct="true">4, porque tiene una base de 1 más tres condiciones <code>if</code> independientes</button>
+      <button class="sc-option" data-correct="false">3, porque solo se cuentan los <code>if</code> que no son el último</button>
+      <button class="sc-option" data-correct="false">8, porque se cuenta cada línea de código como un camino</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: la complejidad ciclomática parte de una base de 1 y suma 1 por cada punto de decisión — los
+      tres <code>if</code> independientes suman 3, dando un total de 4.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 5 de 5</span>
+    <p class="sc-question">¿Para qué sirve principalmente medir la complejidad ciclomática de una función, según esta página?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Para castigar o evaluar personalmente a quien escribió el código</button>
+      <button class="sc-option" data-correct="true">Para tener una señal objetiva y barata de dónde priorizar la atención de un refactor, en vez de adivinar</button>
+      <button class="sc-option" data-correct="false">Para reemplazar completamente la necesidad de tests unitarios</button>
+      <button class="sc-option" data-correct="false">Para medir cuántas líneas de código tiene un proyecto</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: es una métrica objetiva para priorizar dónde mirar, no un juicio de valor — herramientas
+      como SonarCloud (siguiente módulo dentro de esta unidad) la calculan automáticamente en cada PR.
+    </div>
+  </div>
+</section>

@@ -113,6 +113,6 @@ module_title: "Pruebas Unitarias y TDD"
 - The course site documents the labs; it does not need to *run* the practices in-browser (unlike the AI course's live demos) — the practice happens in each student's own GitHub repo.
 - Every module ties the concept back to a concrete production incident/cost-of-no-quality story before showing the practice, same narrative structure as the sister courses.
 - Python, C++, and Flutter/Dart labs are presented side by side wherever code is involved — never one stack silently standing in for the others.
-- Current status: **Módulos 1-4 have full content and are linked/marked "Disponible" from the index; Módulos 5-8 and the final project are still skeleton-only** — a module's links are wired up only once its content is written.
+- Current status: **Módulos 1-6 have full content and are linked/marked "Disponible" from the index; Módulos 7-8 and the final project are still skeleton-only** — a module's links are wired up only once its content is written.
 - Spanish is the primary language for UI text (course is taught in Spanish).
 - Every lab page's "Autoevaluación" section has **at least 5 questions** (`.self-check` blocks, one per question, labeled "Pregunta N de 5" via `<span class="section-kicker">`), each grounded in a specific section covered on that same page — not generic trivia.
