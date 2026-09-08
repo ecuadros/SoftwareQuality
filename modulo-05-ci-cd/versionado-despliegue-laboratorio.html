@@ -15,6 +15,7 @@ next_title: "Análisis estático y code smells"
   <a href="#versionado-semantico">Versionado semántico</a>
   <a href="#commits-a-version">De Conventional Commits a la versión automática</a>
   <a href="#estrategias-despliegue">Estrategias de despliegue (panorama)</a>
+  <a href="#despliegue-microservicios">Despliegue independiente en microservicios</a>
   <a href="#laboratorio">Laboratorio: tu propio pipeline de CI</a>
   <a href="#checklist-cierre">Checklist de cierre — Módulo 5</a>
   <a href="#autoevaluacion">Autoevaluación</a>
@@ -99,6 +100,53 @@ $ npx semantic-release   <span class="cm"># o python-semantic-release, según el
   </div>
 </section>
 
+<section class="demo-section" id="despliegue-microservicios">
+  <span class="section-kicker">// cuando cada servicio se despliega solo</span>
+  <h2>Despliegue independiente en microservicios: el gate <code>can-i-deploy</code></h2>
+  <p>
+    Las cuatro estrategias de arriba resuelven "cómo reemplazo la versión vieja por la nueva sin downtime".
+    En una arquitectura de <strong>microservicios</strong> hay una pregunta previa, distinta: <strong>¿es
+    seguro desplegar esta versión de este servicio, dado lo que ya está corriendo de los demás?</strong> —
+    la pregunta central del contract testing del Módulo 4.
+  </p>
+  <p>
+    Cada servicio tiene su propio pipeline (Módulo 5, página anterior) y se despliega en su propio momento.
+    Antes del job de deploy, ese pipeline agrega un paso que consulta al Pact Broker:
+  </p>
+  <div class="code-block">
+    <div class="code-block-label">.github/workflows/deploy.yml — servicio pagos-service</div>
+    <pre>jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test   <span class="cm"># el job de CI del Módulo 5, en verde primero</span>
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ¿Es seguro desplegar esta versión?
+        run: |
+          pact-broker can-i-deploy \
+            --pacticipant pagos-service \
+            --version ${% raw %}{{ github.sha }}{% endraw %} \
+            --to-environment produccion
+
+      - name: Desplegar a producción
+        if: success()
+        run: ./scripts/deploy.sh</pre>
+  </div>
+  <div class="callout warn">
+    Si <code>can-i-deploy</code> falla, el job de deploy <strong>ni siquiera arranca</strong> — sin importar
+    que los tests unitarios y de integración de <code>pagos-service</code> estén en verde. Es un quality
+    gate adicional, específico de sistemas con varios servicios desplegándose por separado: el pipeline de
+    un servicio ya no solo pregunta "¿mi código está bien?", también pregunta "¿mi código sigue siendo
+    compatible con quienes dependen de mí, ahora mismo en producción?".
+  </div>
+  <div class="callout accent2">
+    Esto es lo que hace posible el <strong>despliegue independiente</strong> — la promesa central de
+    microservicios: cada equipo despliega cuando quiere, sin coordinar un "gran release" con los demás,
+    porque el contrato (no una reunión de coordinación) es lo que garantiza que nada se rompe del otro lado.
+  </div>
+</section>
+
 <section class="demo-section" id="laboratorio">
   <span class="section-kicker">// laboratorio</span>
   <h2>Laboratorio: tu propio pipeline de CI</h2>
@@ -143,7 +191,7 @@ $ npx semantic-release   <span class="cm"># o python-semantic-release, según el
   <h2>Autoevaluación</h2>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 1 de 5</span>
+    <span class="section-kicker">Pregunta 1 de 6</span>
     <p class="sc-question">Un equipo elimina un parámetro de una función pública que otros equipos ya consumen. Según SemVer, ¿qué componente de la versión debe subir?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">PARCHE</button>
@@ -158,7 +206,7 @@ $ npx semantic-release   <span class="cm"># o python-semantic-release, según el
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 2 de 5</span>
+    <span class="section-kicker">Pregunta 2 de 6</span>
     <p class="sc-question">¿Qué hace posible calcular automáticamente la siguiente versión semántica sin que una persona la decida a mano?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Que el repositorio sea público</button>
@@ -174,7 +222,7 @@ $ npx semantic-release   <span class="cm"># o python-semantic-release, según el
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 3 de 5</span>
+    <span class="section-kicker">Pregunta 3 de 6</span>
     <p class="sc-question">Según la tabla de estrategias de despliegue, ¿cuál despliega la nueva versión a solo un pequeño porcentaje del tráfico real antes de expandirla?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Recreate</button>
@@ -190,7 +238,7 @@ $ npx semantic-release   <span class="cm"># o python-semantic-release, según el
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 4 de 5</span>
+    <span class="section-kicker">Pregunta 4 de 6</span>
     <p class="sc-question">En el laboratorio de esta página, ¿qué prueba concreta demuestra que el quality gate de CI realmente bloquea merges, y no solo "reporta" un estado?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Que el pipeline tarde menos de 2 minutos en correr</button>
@@ -206,7 +254,7 @@ $ npx semantic-release   <span class="cm"># o python-semantic-release, según el
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 5 de 5</span>
+    <span class="section-kicker">Pregunta 5 de 6</span>
     <p class="sc-question">Un equipo usa Rolling deployment. Según lo visto en esta página, ¿qué requisito deben cumplir la versión vieja y la nueva mientras conviven durante el despliegue?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Deben tener exactamente el mismo número de versión</button>
@@ -217,6 +265,22 @@ $ npx semantic-release   <span class="cm"># o python-semantic-release, según el
     <div class="sc-rationale">
       Correcto: a diferencia de Recreate (que apaga todo antes de desplegar), en Rolling ambas versiones
       sirven tráfico real simultáneamente durante la transición, por lo que deben ser compatibles.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 6 de 6</span>
+    <p class="sc-question">Según esta página, ¿qué pregunta distinta responde el gate <code>can-i-deploy</code>, que no responden las cuatro estrategias de despliegue de la tabla anterior?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Cuánto tiempo de downtime va a tener el despliegue</button>
+      <button class="sc-option" data-correct="true">Si esta versión del servicio sigue siendo compatible con los consumidores que ya están corriendo en producción</button>
+      <button class="sc-option" data-correct="false">Cuántos servidores hacen falta para el despliegue</button>
+      <button class="sc-option" data-correct="false">Si el código pasó el análisis estático del Módulo 6</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: las estrategias de despliegue resuelven <em>cómo</em> reemplazar una versión sin downtime;
+      <code>can-i-deploy</code> resuelve una pregunta previa y distinta — si es seguro hacerlo, dado el
+      contrato con los demás servicios que ya están en producción (Módulo 4).
     </div>
   </div>
 </section>

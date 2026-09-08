@@ -134,24 +134,88 @@ class CarritoRepositoryIT {
 </section>
 
 <section class="demo-section" id="contract-testing">
-  <span class="section-kicker">// para sistemas con varios servicios</span>
+  <span class="section-kicker">// el problema central de los microservicios</span>
   <h2>Contract testing: el problema del ejemplo inicial, resuelto</h2>
   <p>
     El <strong>contract testing</strong> ataca exactamente el escenario de pagos vs. carrito de la
-    introducción: en vez de que cada equipo mockee al otro "a mano" (con el riesgo de que el mock quede
-    desactualizado), ambos equipos comparten un <strong>contrato</strong> explícito — un archivo que
-    describe la forma exacta de la request/response esperada.
+    introducción — y no es casualidad que sea justo ahí donde más se necesita. En una arquitectura de
+    <strong>microservicios</strong>, cada servicio se despliega de forma independiente, en su propio
+    momento, por su propio equipo. Nadie coordina un "gran release" donde todos los servicios cambian
+    juntos — lo que significa que el problema de "el proveedor cambió el formato y el consumidor no se
+    enteró" no es una excepción, es el riesgo estructural número uno de este estilo de arquitectura.
   </p>
-  <ul style="margin: 0 0 1rem 1.25rem; color: var(--muted); line-height: 1.9;">
-    <li>El equipo <strong>consumidor</strong> (carrito) genera el contrato a partir de lo que su código realmente espera recibir.</li>
-    <li>El equipo <strong>proveedor</strong> (pagos) corre ese mismo contrato contra su implementación real en su propio CI.</li>
-    <li>Si el proveedor cambia el formato de <code>monto</code> sin actualizar el contrato, <strong>su propio pipeline de CI falla</strong> — antes de publicar la nueva versión, no después de que el carrito la consuma en producción.</li>
-  </ul>
+  <p>
+    En vez de que cada equipo mockee al otro "a mano" (con el riesgo de que el mock quede desactualizado),
+    ambos equipos comparten un <strong>contrato</strong> explícito — un archivo que describe la forma exacta
+    de la request/response esperada — a través de un <strong>Pact Broker</strong>, un servicio central que
+    coordina el intercambio:
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Paso</th><th>Quién lo hace</th><th>Qué produce</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>Equipo <strong>consumidor</strong> (carrito)</td><td>Corre su test de contrato, genera un archivo <em>pact</em> (JSON) con las interacciones que su código realmente espera.</td></tr>
+        <tr><td>2</td><td>Equipo consumidor, en su CI (Módulo 5)</td><td>Publica ese pact al <strong>Pact Broker</strong> compartido.</td></tr>
+        <tr><td>3</td><td>Equipo <strong>proveedor</strong> (pagos), en su propio CI</td><td>Descarga los pacts publicados por sus consumidores y los verifica contra su implementación real.</td></tr>
+        <tr><td>4</td><td>Pact Broker</td><td>Registra si esa versión del proveedor cumple el contrato de cada consumidor conocido.</td></tr>
+        <tr><td>5</td><td>Cualquiera de los dos equipos, antes de desplegar</td><td>Pregunta al broker <code>can-i-deploy</code> — "¿es seguro desplegar esta versión, dado lo que ya está en producción del otro lado?"</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="code-block">
+    <div class="code-block-label">src/test/java/CarritoConsumerPactTest.java — equipo consumidor</div>
+    <pre><span class="cm">@ExtendWith(PactConsumerTestExt.class)</span>
+class CarritoConsumerPactTest {
+
+    @Pact(consumer = "carrito-service", provider = "pagos-service")
+    public RequestResponsePact procesarPago(PactDslWithProvider builder) {
+        return builder
+            .given("el monto es válido")
+            .uponReceiving("una solicitud de pago")
+                .path("/pagos").method("POST")
+                .body("{\"monto\": 108.00}")
+            .willRespondWith()
+                .status(200)
+                .body("{\"estado\": \"aprobado\", \"monto\": 108.00}")
+            .toPact();
+    }
+
+    @Test
+    @PactTestFor(pactMethod = "procesarPago")
+    void elCarritoProcesaUnPagoAprobado(MockServer mockServer) {
+        <span class="cm">// llama al mock generado por Pact en mockServer.getUrl() y verifica la respuesta</span>
+    }
+}</pre>
+  </div>
+  <div class="code-block">
+    <div class="code-block-label">bash — equipo proveedor, verificando el pact publicado</div>
+    <pre>$ mvn pact:verify
+<span class="cm"># Verifying a pact between carrito-service and pagos-service
+# Given el monto es válido
+#   una solicitud de pago
+#     returns a response which
+#       has status code 200 (OK)
+#       has a matching body (OK)</span>
+
+$ pact-broker can-i-deploy --pacticipant pagos-service --version 2.4.0 --to-environment produccion
+<span class="cm"># Computer says yes \o/ — todos los consumidores conocidos verificaron esta versión</span></pre>
+  </div>
+
   <div class="callout accent2">
-    Herramientas como <a href="https://pact.io/" target="_blank" rel="noopener">Pact</a> automatizan este
-    intercambio de contratos entre servicios. Para el proyecto de este curso, con un equipo pequeño, la
-    versión práctica y suficiente es: mantener un archivo de esquema compartido (JSON Schema u OpenAPI) que
-    ambos lados validan en su propio CI — la disciplina importa más que la herramienta específica.
+    <code>can-i-deploy</code> es la pieza que conecta este módulo con el Módulo 5: se agrega como paso
+    obligatorio del pipeline <em>antes</em> del job de deploy, para cada servicio. Si algún consumidor
+    todavía no verificó esa versión — o la verificó y falló — el despliegue se bloquea automáticamente,
+    sin depender de que alguien recuerde coordinar manualmente entre equipos.
+  </div>
+  <div class="callout">
+    Para el proyecto de este curso, con un equipo pequeño, montar un Pact Broker completo puede ser más
+    infraestructura de la que hace falta. La versión práctica y suficiente sigue siendo válida: un archivo
+    de esquema compartido (JSON Schema u OpenAPI) que ambos lados validan en su propio CI. Lo importante es
+    entender el <em>mecanismo</em> — contrato explícito, verificado por el proveedor, que bloquea el
+    despliegue si se rompe — más que la herramienta específica.
   </div>
 </section>
 
@@ -160,7 +224,7 @@ class CarritoRepositoryIT {
   <h2>Autoevaluación</h2>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 1 de 6</span>
+    <span class="section-kicker">Pregunta 1 de 7</span>
     <p class="sc-question">
       En el ejemplo de pagos y carrito, ambos equipos tenían 100% de tests unitarios en verde y el sistema
       integrado seguía roto. ¿Por qué los tests unitarios no atraparon el problema?
@@ -179,7 +243,7 @@ class CarritoRepositoryIT {
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 2 de 6</span>
+    <span class="section-kicker">Pregunta 2 de 7</span>
     <p class="sc-question">Según la pirámide de pruebas de Mike Cohn, ¿cómo debería distribuirse la cantidad de tests entre capas?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">La misma cantidad exacta en cada capa</button>
@@ -194,7 +258,7 @@ class CarritoRepositoryIT {
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 3 de 6</span>
+    <span class="section-kicker">Pregunta 3 de 7</span>
     <p class="sc-question">Un equipo confía casi exclusivamente en tests E2E porque "prueban todo de verdad". Según lo visto en esta página, ¿qué problema práctico genera esto?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Ningún problema, es la estrategia más segura posible</button>
@@ -209,7 +273,7 @@ class CarritoRepositoryIT {
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 4 de 6</span>
+    <span class="section-kicker">Pregunta 4 de 7</span>
     <p class="sc-question">¿Cuál es la diferencia clave entre un test unitario y un test de integración sobre el mismo código de acceso a datos?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">El test de integración no necesita aserciones</button>
@@ -225,7 +289,7 @@ class CarritoRepositoryIT {
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 5 de 6</span>
+    <span class="section-kicker">Pregunta 5 de 7</span>
     <p class="sc-question">En contract testing, ¿qué logra que el equipo proveedor corra el contrato del consumidor en su propio pipeline de CI?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Elimina la necesidad de que el proveedor escriba sus propios tests</button>
@@ -240,7 +304,7 @@ class CarritoRepositoryIT {
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 6 de 6</span>
+    <span class="section-kicker">Pregunta 6 de 7</span>
     <p class="sc-question">En el ejemplo de <code>CarritoRepositoryIT</code> con Testcontainers, ¿qué logra levantar un <code>MongoDBContainer</code> real en Docker, en vez de usar un mock o un fake en memoria?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Hace que el test corra más rápido que uno unitario</button>
@@ -253,6 +317,22 @@ class CarritoRepositoryIT {
       dependencia real, no mockeada. Testcontainers da esa base de datos real de forma efímera, sin
       compartir estado entre corridas ni depender de un servidor MongoDB fijo en la máquina de cada
       desarrollador.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 7 de 7</span>
+    <p class="sc-question">El equipo de <code>pagos-service</code> quiere desplegar su versión 2.4.0 a producción. Según el mecanismo de Pact Broker descrito en esta página, ¿qué verifica el comando <code>can-i-deploy</code> antes de permitirlo?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Que el código pase el linter del Módulo 6</button>
+      <button class="sc-option" data-correct="true">Que todos los consumidores conocidos (como carrito-service) ya hayan verificado y aprobado el contrato con esa versión específica</button>
+      <button class="sc-option" data-correct="false">Que el servicio tenga al menos 80% de cobertura de tests</button>
+      <button class="sc-option" data-correct="false">Que no haya vulnerabilidades de dependencias sin resolver</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: <code>can-i-deploy</code> responde específicamente "¿es seguro desplegar esto, dado lo que
+      ya está en producción del otro lado?" — consultando en el broker si los consumidores conocidos ya
+      verificaron esa versión exacta del contrato, no otros aspectos de calidad como cobertura o linters.
     </div>
   </div>
 </section>

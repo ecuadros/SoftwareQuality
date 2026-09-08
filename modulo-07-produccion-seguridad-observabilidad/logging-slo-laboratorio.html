@@ -14,6 +14,8 @@ next_title: "Definition of Done y cultura de calidad de equipo"
 <nav class="demo-toc">
   <a href="#el-problema">"Creo que falló como a las 3 de la tarde"</a>
   <a href="#logging-estructurado">Logging estructurado por stack</a>
+  <a href="#trazabilidad-distribuida">Trazabilidad distribuida entre microservicios</a>
+  <a href="#circuit-breakers">Circuit breakers: contener fallas en cascada</a>
   <a href="#sli-slo">SLIs, SLOs y error budget</a>
   <a href="#laboratorio">Laboratorio: instrumenta tu propio repo</a>
   <a href="#checklist-cierre">Checklist de cierre — Módulo 7</a>
@@ -87,6 +89,96 @@ spdlog::info(R"({{"event": "pago_procesado", "usuario_id": {}, "monto": {}}})", 
   </div>
 </section>
 
+<section class="demo-section" id="trazabilidad-distribuida">
+  <span class="section-kicker">// cuando un log estructurado ya no alcanza</span>
+  <h2>Trazabilidad distribuida entre microservicios</h2>
+  <p>
+    Logging estructurado resuelve el problema dentro de <strong>un</strong> servicio. Pero cuando el
+    carrito llama a pagos, que a su vez llama a un servicio de inventario, un mismo request de usuario
+    genera logs separados en tres servicios distintos — sin nada que los conecte, es imposible reconstruir
+    la historia completa de esa transacción específica.
+  </p>
+  <div class="callout warn">
+    <strong>El problema se agrava con la escala.</strong> En un monolito, un stack trace te muestra toda la
+    ruta de ejecución. En microservicios, esa ruta cruza la red varias veces — cada salto es una
+    oportunidad de perder el hilo, justo cuando más falta hace para investigar una falla.
+  </div>
+  <p>
+    La solución es un <strong>trace ID</strong>: un identificador único generado en el primer servicio que
+    recibe el request, propagado en cada llamada HTTP subsecuente (típicamente en un header como
+    <code>traceparent</code>, el estándar de <a href="https://www.w3.org/TR/trace-context/" target="_blank" rel="noopener">W3C Trace Context</a>), y registrado en <strong>cada</strong> línea de log de
+    <strong>cada</strong> servicio que participó.
+  </p>
+  <div class="code-block">
+    <div class="code-block-label">logs de dos servicios distintos, correlacionados por el mismo trace_id</div>
+    <pre><span class="cm"># carrito-service</span>
+{"event": "cupon_aplicado", "trace_id": "4bf92f35...", "usuario_id": 42}
+
+<span class="cm"># pagos-service (mismo request, otro servicio, otro proceso)</span>
+{"event": "pago_procesado", "trace_id": "4bf92f35...", "monto": 108.0}</pre>
+  </div>
+  <p>
+    En Spring Boot, <strong>Micrometer Tracing</strong> (con un exportador a
+    <a href="https://opentelemetry.io/" target="_blank" rel="noopener">OpenTelemetry</a>) genera y propaga
+    ese <code>trace_id</code> automáticamente entre servicios y lo inyecta en el contexto de logging — no
+    hace falta pasarlo a mano en cada llamada. Para los otros stacks del curso, el mismo principio aplica de
+    forma manual: leer el header entrante, reusarlo si existe (o generarlo si el servicio es el primero en
+    la cadena), y propagarlo en cada llamada saliente.
+  </p>
+  <div class="callout accent2">
+    Un incidente que cruza tres servicios sin trace ID se investiga adivinando por marca de tiempo
+    aproximada — exactamente el problema del inicio de esta página, pero multiplicado por cada servicio de
+    la arquitectura.
+  </div>
+</section>
+
+<section class="demo-section" id="circuit-breakers">
+  <span class="section-kicker">// contener la falla antes de que se propague</span>
+  <h2>Circuit breakers: contener fallas en cascada</h2>
+  <p>
+    Si <code>pagos-service</code> empieza a responder lento (o deja de responder), y <code>carrito-service</code>
+    sigue esperando cada respuesta con paciencia infinita, sus hilos y conexiones se van acumulando en espera
+    hasta que <code>carrito-service</code> también cae — aunque su propio código nunca tuvo ningún bug. Una
+    falla en un servicio se propaga en cascada a todo lo que depende de él.
+  </p>
+  <p>
+    Un <strong>circuit breaker</strong> (patrón popularizado por Netflix Hystrix, hoy implementado en
+    <a href="https://resilience4j.readme.io/" target="_blank" rel="noopener">Resilience4j</a> para el
+    ecosistema Java/Spring) monitorea la tasa de fallas de una dependencia y, al superar un umbral, deja de
+    intentar llamarla por un tiempo — devolviendo una respuesta alternativa inmediata en vez de dejar que la
+    espera se acumule.
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Estado</th><th>Comportamiento</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Closed (cerrado)</strong></td><td>Comportamiento normal — las llamadas pasan directo a <code>pagos-service</code>.</td></tr>
+        <tr><td><strong>Open (abierto)</strong></td><td>La tasa de fallas superó el umbral — las llamadas ni siquiera se intentan; se devuelve el fallback de inmediato.</td></tr>
+        <tr><td><strong>Half-open (semiabierto)</strong></td><td>Pasado un tiempo, deja pasar algunas llamadas de prueba para ver si <code>pagos-service</code> ya se recuperó, antes de volver a Closed.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="code-block">
+    <div class="code-block-label">Java/Spring Boot — Resilience4j</div>
+    <pre>@CircuitBreaker(name = "pagosService", fallbackMethod = "pagoNoDisponible")
+public ResultadoPago procesarPago(Pedido pedido) {
+    return pagosClient.procesar(pedido);
+}
+
+public ResultadoPago pagoNoDisponible(Pedido pedido, Throwable error) {
+    return ResultadoPago.pendiente("El servicio de pagos no está disponible, reintenta en unos minutos");
+}</pre>
+  </div>
+  <div class="callout">
+    Nota la conexión con el Módulo 7 completo: el circuit breaker protege tu propio <strong>error
+    budget</strong> (siguiente sección de esta página) de una falla que ni siquiera es tuya. Sin él, un incidente en
+    <code>pagos-service</code> consume también el presupuesto de disponibilidad de <code>carrito-service</code>
+    — con él, tu servicio responde degradado pero sigue respondiendo.
+  </div>
+</section>
+
 <section class="demo-section" id="sli-slo">
   <span class="section-kicker">// del log individual a la promesa del sistema</span>
   <h2>SLIs, SLOs y error budget</h2>
@@ -129,6 +221,7 @@ spdlog::info(R"({{"event": "pago_procesado", "usuario_id": {}, "monto": {}}})", 
       <li data-item="sanitizers-o-perf"><input type="checkbox" id="l7-2" /><label for="l7-2">Si tu proyecto es C++, corriste tu suite de tests con ASan/UBSan al menos una vez; si es otro stack, corriste una prueba de carga o de performance real.</label></li>
       <li data-item="logging-json"><input type="checkbox" id="l7-3" /><label for="l7-3">Reemplazaste al menos un <code>print</code>/log de texto libre por un log estructurado con campos consistentes.</label></li>
       <li data-item="slo-definido"><input type="checkbox" id="l7-4" /><label for="l7-4">Definiste al menos un SLI y un SLO explícito para tu proyecto (aunque sea aspiracional).</label></li>
+      <li data-item="trace-id-si-microservicios"><input type="checkbox" id="l7-6" /><label for="l7-6">Si tu proyecto tiene más de un servicio, propagaste un trace ID entre ellos y confirmaste que aparece en los logs de ambos lados.</label></li>
       <li data-item="pr-observabilidad"><input type="checkbox" id="l7-5" /><label for="l7-5">Abriste el PR correspondiente siguiendo el flujo del Módulo 2, con revisión real.</label></li>
     </ul>
   </div>
@@ -157,7 +250,7 @@ spdlog::info(R"({{"event": "pago_procesado", "usuario_id": {}, "monto": {}}})", 
   <h2>Autoevaluación</h2>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 1 de 5</span>
+    <span class="section-kicker">Pregunta 1 de 7</span>
     <p class="sc-question">Según el ejemplo inicial, ¿cuál es el problema principal de un log como <code>"error al procesar"</code> escrito como texto libre?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Que ocupa demasiado espacio en disco</button>
@@ -172,7 +265,7 @@ spdlog::info(R"({{"event": "pago_procesado", "usuario_id": {}, "monto": {}}})", 
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 2 de 5</span>
+    <span class="section-kicker">Pregunta 2 de 7</span>
     <p class="sc-question">¿Qué expone específicamente Spring Boot Actuator que menciona esta página?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Solo el código fuente de la aplicación</button>
@@ -187,7 +280,7 @@ spdlog::info(R"({{"event": "pago_procesado", "usuario_id": {}, "monto": {}}})", 
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 3 de 5</span>
+    <span class="section-kicker">Pregunta 3 de 7</span>
     <p class="sc-question">Según la tabla de SLOs de esta página, ¿cuánto tiempo de falla al mes permite un SLO de 99.9% de disponibilidad?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">~7.3 horas</button>
@@ -202,7 +295,7 @@ spdlog::info(R"({{"event": "pago_procesado", "usuario_id": {}, "monto": {}}})", 
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 4 de 5</span>
+    <span class="section-kicker">Pregunta 4 de 7</span>
     <p class="sc-question">Según el callout sobre error budget, ¿qué decisión de equipo permite tomar un error budget explícito?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Ninguna — el error budget es solo una métrica decorativa</button>
@@ -217,7 +310,7 @@ spdlog::info(R"({{"event": "pago_procesado", "usuario_id": {}, "monto": {}}})", 
   </div>
 
   <div class="self-check">
-    <span class="section-kicker">Pregunta 5 de 5</span>
+    <span class="section-kicker">Pregunta 5 de 7</span>
     <p class="sc-question">Según el callout de "shift left" de esta página, ¿por qué invertir en logging estructurado antes de un incidente es más barato que hacerlo después?</p>
     <div class="sc-options">
       <button class="sc-option" data-correct="false">Porque las librerías de logging estructurado son gratuitas y las de texto libre no</button>
@@ -229,6 +322,37 @@ spdlog::info(R"({{"event": "pago_procesado", "usuario_id": {}, "monto": {}}})", 
       Correcto: cuando ocurre un incidente serio (Módulo 8), reconstruir qué pasó exactamente depende
       completamente de la calidad de la evidencia que ya existía — no se puede instrumentar en retrospectiva
       un evento que ya ocurrió.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 6 de 7</span>
+    <p class="sc-question">Un request de usuario pasa por carrito-service, pagos-service e inventario-service. Según esta página, ¿qué hace posible reconstruir la historia completa de ese request a través de los tres servicios?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Que los tres servicios usen el mismo lenguaje de programación</button>
+      <button class="sc-option" data-correct="true">Un trace ID único generado al inicio del request y propagado en cada llamada HTTP subsecuente, registrado en los logs de los tres servicios</button>
+      <button class="sc-option" data-correct="false">Que los tres servicios compartan la misma base de datos MongoDB</button>
+      <button class="sc-option" data-correct="false">Que el usuario reporte manualmente la hora exacta del problema</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: sin un identificador compartido y propagado entre servicios, no hay forma de conectar logs
+      que viven en procesos y máquinas distintas — el trace ID es exactamente ese hilo conductor.
+    </div>
+  </div>
+
+  <div class="self-check">
+    <span class="section-kicker">Pregunta 7 de 7</span>
+    <p class="sc-question">Según el ejemplo de Resilience4j, ¿qué ocurre cuando el circuit breaker de <code>pagosService</code> pasa al estado "Open"?</p>
+    <div class="sc-options">
+      <button class="sc-option" data-correct="false">Las llamadas a pagos-service se reintentan indefinidamente hasta que responda</button>
+      <button class="sc-option" data-correct="true">Las llamadas dejan de intentarse contra pagos-service y se ejecuta el método de fallback de inmediato</button>
+      <button class="sc-option" data-correct="false">El servicio pagos-service se reinicia automáticamente</button>
+      <button class="sc-option" data-correct="false">Todo el tráfico de carrito-service se redirige a un servidor de respaldo</button>
+    </div>
+    <div class="sc-rationale">
+      Correcto: en estado Open, el circuit breaker corta las llamadas a la dependencia que está fallando y
+      responde con el fallback inmediatamente, evitando que la espera se acumule y se propague como falla
+      en cascada.
     </div>
   </div>
 </section>
