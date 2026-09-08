@@ -1,0 +1,151 @@
+---
+layout: lab
+title: "Arquitectura Digital para el Desarrollo del Perú"
+subtitle: "El hilo conductor de este curso: un solo problema real, lo bastante grande para necesitar cada práctica de calidad que vas a construir."
+eyebrow: "Enunciado del curso · Hilo conductor — sin numeración de módulo"
+module: "Base"
+module_title: "Arquitectura Digital para el Desarrollo del Perú"
+next_url: "/modulo-01-fundamentos-calidad/modelos-calidad-costo.html"
+next_title: "Modelos de Calidad y Costo de la No-Calidad"
+---
+
+<div class="callout accent2">
+  <strong>Este enunciado no es un módulo con fecha de corte ni una entrega evaluada.</strong> Es el
+  telón de fondo del curso completo — el escenario del mundo real al que cada práctica de calidad que vas
+  a construir (Módulos 1 a 8) le encuentra sentido. Tu proyecto sigue siendo tuyo, en el stack que elijas;
+  esto es el "por qué" detrás de exigirle tanta calidad.
+</div>
+
+<nav class="demo-toc">
+  <a href="#la-pregunta">¿Podríamos imaginarnos el plan de un país muy digital?</a>
+  <a href="#peru-en-numeros">Perú en números, hoy</a>
+  <a href="#siete-palabras">Siete palabras, un mismo artefacto</a>
+  <a href="#el-rompecabezas">El rompecabezas: un chasis para 32 millones de personas</a>
+  <a href="#hilo-conductor">Por qué es el hilo conductor de este curso</a>
+</nav>
+
+<section class="demo-section" id="la-pregunta">
+  <span class="section-kicker">// el problema</span>
+  <h2>¿Podríamos imaginarnos el plan estratégico de un país muy digital?</h2>
+  <p>
+    ¿Cómo <strong>Estonia</strong>, <strong>Corea</strong>, <strong>Singapur</strong>, <strong>Estados
+    Unidos</strong> o <strong>China</strong>? Se trata de crear un artefacto que refleje el entendimiento de
+    algunas palabras clave: <strong>acelerador</strong>, <strong>transversal</strong>,
+    <strong>escalable</strong>, <strong>distribuido</strong>, <strong>soberano</strong>,
+    <strong>sostenible</strong> y <strong>seguro</strong>.
+  </p>
+  <p>
+    El estado peruano genera información todo el tiempo, en miles de puntos distintos del territorio, que
+    debe ser procesada y consumida por un número potencial de <strong>32 millones de habitantes</strong>.
+    La pregunta de este curso — aplicada a escala de un solo repositorio de estudiante, no de un país
+    entero — es la misma que se hace ese plan estratégico: ¿cómo se construye algo que funcione así de
+    bien, y que además <em>siga</em> funcionando así de bien con el tiempo?
+  </p>
+</section>
+
+<section class="demo-section" id="peru-en-numeros">
+  <span class="section-kicker">// la escala real del problema</span>
+  <h2>Perú en números, hoy</h2>
+  <p>
+    Estas no son cifras abstractas — son la cantidad de puntos de origen de datos que un sistema así
+    tendría que soportar, cada uno generando información en tiempo real:
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Institución</th><th>Cantidad aproximada</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Locales escolares</td><td>56,000 (114K instituciones educativas, 400K docentes) + 30,000 privados</td></tr>
+        <tr><td>Centros hospitalarios</td><td>+15,000 (15,500)</td></tr>
+        <tr><td>Comisarías</td><td>+5,000</td></tr>
+        <tr><td>Municipios distritales</td><td>+1,900</td></tr>
+        <tr><td>Municipios provinciales</td><td>+190</td></tr>
+        <tr><td>Habitantes potenciales del sistema</td><td>~32,000,000</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout warn">
+    Ningún sistema diseñado para "una oficina" o "un piloto de 50 usuarios" sobrevive a esta escala sin
+    quebrarse. Cada práctica de calidad de este curso — tests, CI, análisis estático, seguridad,
+    observabilidad — es exactamente lo que separa un sistema que funciona en una demo de uno que funciona
+    con miles de instituciones y millones de personas dependiendo de él todos los días.
+  </div>
+</section>
+
+<section class="demo-section" id="siete-palabras">
+  <span class="section-kicker">// el vocabulario del enunciado</span>
+  <h2>Siete palabras, un mismo artefacto</h2>
+  <p>
+    Un artefacto que sea capaz de <strong>acelerar</strong> todos los sectores del país
+    (<strong>transversal</strong>), que funcione con millones de datos por segundo
+    (<strong>escalable</strong>), sin importar la posición geográfica donde nos encontremos
+    (<strong>distribuido</strong>), que funcione en nuestro territorio (<strong>soberano</strong>), que sea
+    <strong>sostenible</strong> y que sea <strong>seguro</strong>.
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Palabra</th><th>Qué exige</th><th>Dónde la trabajas en este curso</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Acelerador</strong></td><td>Crecimiento exponencial, no lineal — cada mejora multiplica valor, no solo lo suma.</td><td>CI/CD (Módulo 5): automatizar es lo que permite que una mejora se propague rápido a todo el sistema.</td></tr>
+        <tr><td><strong>Transversal</strong></td><td>Aplicable a todos los sectores (salud, educación, agricultura...), no a uno solo.</td><td>El patrón de Chasis (Anexo de Microservicios): la misma base de calidad, sin importar el dominio.</td></tr>
+        <tr><td><strong>Escalable</strong></td><td>De decenas de usuarios a millones, sin rediseñar todo.</td><td>Pruebas de carga y performance (Módulo 7).</td></tr>
+        <tr><td><strong>Distribuido</strong></td><td>Funciona sin importar la posición geográfica.</td><td>Microservicios, contract testing y trazabilidad distribuida (Módulos 4 y 7).</td></tr>
+        <tr><td><strong>Soberano</strong></td><td>Corre en territorio propio, bajo reglas propias.</td><td>Dependency scanning y control de qué corre realmente en tu infraestructura (Módulo 7).</td></tr>
+        <tr><td><strong>Sostenible</strong></td><td>Sobrevive al ruido político y al paso del tiempo, no solo a la demo inicial.</td><td>Deuda técnica, Definition of Done y cultura de calidad (Módulos 1 y 8).</td></tr>
+        <tr><td><strong>Seguro</strong></td><td>Protegido por diseño, no como ocurrencia tardía.</td><td>Seguridad en producción y postmortems sin culpa (Módulos 7 y 8).</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="demo-section" id="el-rompecabezas">
+  <span class="section-kicker">// la figura central de este enunciado</span>
+  <h2>El rompecabezas: un chasis para 32 millones de personas</h2>
+  <p>
+    Esta figura resume el enunciado completo en una sola imagen. Léela como un rompecabezas de piezas
+    Lego, igual que en el <a href="{{ '/anexo-microservicios/patron-de-chasis.html' | relative_url }}">Anexo
+    de Microservicios</a>:
+  </p>
+  <div style="background: #fff; border-radius: 12px; border: 1px solid var(--border); padding: 1.25rem; margin: 1.25rem 0;">
+    <img src="{{ '/assets/img/puzzle-arquitectura-digital-peru.png' | relative_url }}" alt="Rompecabezas de la Arquitectura Digital del Estado Peruano: columnas por sector del estado (salud, educación, interior, agua, energía...) y filas horizontales compartidas (orquestador, base de datos, microservicios, procesos, apps, analítica), con seguridad y con Inteligencia Artificial (IA) como columnas transversales a ambos costados." style="display:block; width:100%; height:auto;" />
+  </div>
+  <p style="color: var(--muted); font-size: 0.85rem; margin-top: -0.5rem;">
+    Fuente: Dr. Ernesto Cuadros-Vargas, <em>Arquitectura Digital para el Desarrollo del Perú</em> —
+    <a href="https://bit.ly/ADEP-S3" target="_blank" rel="noopener">bit.ly/ADEP-S3</a>.
+  </p>
+  <div class="worked-example">
+    <table class="worked-table">
+      <thead>
+        <tr><th>Elemento de la figura</th><th>Qué representa</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Cada columna central</strong></td><td>Un sector del estado distinto: salud, educación, interior, agua, energía... Como <code>salud-service</code>, <code>educacion-service</code> y <code>agricultura-service</code> en el Anexo de Microservicios.</td></tr>
+        <tr><td><strong>Cada fila horizontal</strong> (Orquestador, Base de datos, Microservicios, Procesos, Apps, Open data)</td><td>Una capa que <strong>todo</strong> sector comparte por igual — el chasis. Nadie reinventa su propio orquestador o su propio formato de datos abiertos.</td></tr>
+        <tr><td><strong>Columna izquierda (candados)</strong></td><td>Seguridad, transversal a todas las capas y todos los sectores — nunca una capa aislada.</td></tr>
+        <tr><td><strong>Columna derecha (IA)</strong></td><td>Inteligencia Artificial, igual de transversal: no es "un sector más", es una capacidad que atraviesa cada fila del chasis.</td></tr>
+        <tr><td><strong>El centro</strong> (escudo del Perú, ciudadanos, Open Data)</td><td>El motivo de todo el sistema: personas reales, en un territorio soberano, con datos abiertos a la ciudadanía.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="demo-section" id="hilo-conductor">
+  <span class="section-kicker">// por qué te lo contamos antes del módulo 1</span>
+  <h2>Por qué es el hilo conductor de este curso</h2>
+  <p>
+    No vas a construir la Arquitectura Digital del Estado Peruano en este curso — es un proyecto de escala
+    nacional, de años, con cientos de profesionales. Lo que sí vas a construir, módulo a módulo, sobre tu
+    propio repositorio, son <strong>las mismas prácticas de calidad</strong> que un artefacto así exige:
+    tests que no fallan en silencio, un pipeline que no deja pasar código roto, seguridad que no es una
+    ocurrencia tardía, observabilidad que te dice qué pasó de verdad.
+  </p>
+  <div class="callout">
+    Cada vez que un módulo te pida imaginar un ejemplo — un carrito de compras, un servicio de pagos, un
+    <code>salud-service</code> o un <code>agricultura-service</code> — puedes anclarlo mentalmente a esta
+    misma figura: una pieza más del mismo rompecabezas, construida con el mismo chasis, para que algún día
+    millones de personas puedan confiar en que va a seguir funcionando.
+  </div>
+</section>
