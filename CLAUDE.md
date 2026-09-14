@@ -88,9 +88,12 @@ Each module page is self-contained. Shared visual components (callouts, checklis
 
 ## Anexo: Arquitectura de Microservicios (optional, outside the 16-week schedule)
 
-`/anexo-microservicios/` is deliberately **not** numbered as a module and carries no week/cutoff date — it
-exists in its own `section-header` block on the index between the 8-module grid and Proyecto Final, labeled
-"Anexo · Opcional" instead of "Semana N". It does not affect the evaluation rubric. Content: the
+`/anexo-microservicios/` is deliberately **not** numbered as a module and carries no week/cutoff date. Its
+card lives in the same `module-grid` as the ADEP hilo-conductor card (the "el hilo conductor de todo el
+curso" `section-header`, right after the "Repositorio base" callout), not in its own section — it sits
+next to the ADEP card so the two pieces of framing material are visually paired at the top of the index,
+before the 8-module grid. It is labeled "Anexo · Opcional" instead of "Semana N" and does not affect the
+evaluation rubric. Content: the
 **Microservice Chassis pattern** (Chris Richardson) as the unifying idea that lets otherwise-unrelated
 domain services (the running example uses salud/educación/agricultura) share one base of cross-cutting
 concerns — reusing what Módulos 3–7 already built (CI template, structured logging, tracing, circuit
