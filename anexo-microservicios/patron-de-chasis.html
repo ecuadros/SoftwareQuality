@@ -108,76 +108,101 @@ next_title: "Chasis en la práctica: un parent POM para tres dominios distintos"
     nuevo.
   </p>
 
-  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin: 1.25rem 0; overflow-x: auto;">
-    <svg viewBox="0 0 980 420" width="100%" style="min-width: 640px; display: block; font-family: var(--font-sans);" role="img" aria-labelledby="chasis-svg-title chasis-svg-desc">
-      <title id="chasis-svg-title">El chasis como cobertura común</title>
-      <desc id="chasis-svg-desc">Cuatro piezas de dominio distintas (salud, educación, transportes, agricultura) envueltas por un mismo chasis exterior que impone los mismos protocolos: cifrado, logging, health checks, circuit breaker y dependency scanning.</desc>
+  <p>
+    Mira primero <strong>una sola pieza</strong>, ampliada, con el mismo aspecto de rompecabezas que ya
+    viste en el enunciado <a href="{{ '/proyecto-base/arquitectura-digital-estado-peruano.html' | relative_url }}">Arquitectura
+    Digital para el Desarrollo del Perú</a>: sus conectores (los salientes y las ranuras de los cuatro
+    lados) son el chasis en sí — lo que cualquier pieza necesita para encajar, sin importar de qué dominio
+    sea.
+  </p>
 
-      <!-- Chasis: el envoltorio uniforme -->
-      <rect x="40" y="40" width="900" height="340" rx="24" fill="var(--surface2)" stroke="var(--accent2)" stroke-width="4"/>
-      <text x="60" y="30" font-size="13" font-family="var(--font-mono)" fill="var(--accent2)" letter-spacing="0.04em">// EL CHASIS: MISMO BLINDAJE POR FUERA, SIN IMPORTAR QUÉ HAY ADENTRO</text>
-
-      <!-- Franja superior: protocolos compartidos (lo que es igual "por fuera") -->
-      <rect x="60" y="60" width="860" height="66" rx="12" fill="rgba(188,140,255,0.08)" stroke="var(--accent2)" stroke-width="1.5" stroke-dasharray="4 3"/>
-      <text x="490" y="82" text-anchor="middle" font-size="11" fill="var(--muted)" letter-spacing="0.03em">PROTOCOLOS IDÉNTICOS PARA TODAS LAS PIEZAS</text>
-      <g font-size="13" fill="var(--text)" text-anchor="middle">
-        <text x="146" y="106">🔒 Cifrado</text>
-        <text x="318" y="106">📋 Logging</text>
-        <text x="490" y="106">🩺 Health checks</text>
-        <text x="662" y="106">🔁 Circuit breaker</text>
-        <text x="834" y="106">🔍 Dep. scanning</text>
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin: 1.25rem 0; display: flex; justify-content: center;">
+    <svg viewBox="0 0 680 680" width="100%" style="max-width: 460px; display: block; font-family: var(--font-sans);" role="img" aria-labelledby="chasis-pieza-title chasis-pieza-desc">
+      <title id="chasis-pieza-title">Una pieza del chasis, de cerca</title>
+      <desc id="chasis-pieza-desc">Una sola pieza de rompecabezas con conectores en sus cuatro lados, listando las cinco capacidades comunes que el chasis exige a cualquier pieza que se monte sobre él: cifrado, logging, health checks, circuit breaker y dependency scanning.</desc>
+      <path d="M 100,100 L 244,100 C 244,182 436,182 436,100 L 580,100 L 580,244 C 662,244 662,436 580,436 L 580,580 L 436,580 C 436,662 244,662 244,580 L 100,580 L 100,436 C 182,436 182,244 100,244 L 100,100 Z" fill="rgba(188,140,255,0.10)" stroke="var(--accent2)" stroke-width="5"/>
+      <text x="340" y="225" text-anchor="middle" font-size="28" font-weight="700" fill="var(--accent2)">EL CHASIS</text>
+      <text x="340" y="252" text-anchor="middle" font-size="13" fill="var(--muted)">lo mismo para cualquier pieza que se monte encima</text>
+      <g font-size="17" fill="var(--text)">
+        <text x="222" y="304"><tspan font-size="22">🔒</tspan>&#160;&#160;Cifrado en tránsito y en reposo</text>
+        <text x="222" y="352"><tspan font-size="22">📋</tspan>&#160;&#160;Logging estructurado (mismo esquema)</text>
+        <text x="222" y="400"><tspan font-size="22">🩺</tspan>&#160;&#160;Health checks estándar</text>
+        <text x="222" y="448"><tspan font-size="22">🔁</tspan>&#160;&#160;Circuit breaker por defecto</text>
+        <text x="222" y="496"><tspan font-size="22">🔍</tspan>&#160;&#160;Dependency scanning</text>
       </g>
-
-      <!-- Piezas de dominio: distintas "por dentro" -->
-      <!-- Salud -->
-      <circle cx="120" cy="142" r="7" fill="var(--accent2)"/>
-      <circle cx="190" cy="142" r="7" fill="var(--accent2)"/>
-      <rect x="85" y="150" width="150" height="200" rx="14" fill="rgba(63,185,80,0.12)" stroke="var(--accent3)" stroke-width="2"/>
-      <text x="160" y="215" text-anchor="middle" font-size="34">🩺</text>
-      <text x="160" y="250" text-anchor="middle" font-size="15" font-weight="600" fill="var(--text)">Salud</text>
-      <text x="160" y="270" text-anchor="middle" font-size="11" fill="var(--muted)">lógica propia</text>
-
-      <!-- Educación -->
-      <circle cx="285" cy="142" r="7" fill="var(--accent2)"/>
-      <circle cx="355" cy="142" r="7" fill="var(--accent2)"/>
-      <rect x="250" y="150" width="150" height="200" rx="14" fill="rgba(88,166,255,0.12)" stroke="var(--accent)" stroke-width="2"/>
-      <text x="325" y="215" text-anchor="middle" font-size="34">🎓</text>
-      <text x="325" y="250" text-anchor="middle" font-size="15" font-weight="600" fill="var(--text)">Educación</text>
-      <text x="325" y="270" text-anchor="middle" font-size="11" fill="var(--muted)">lógica propia</text>
-
-      <!-- Transportes -->
-      <circle cx="450" cy="142" r="7" fill="var(--accent2)"/>
-      <circle cx="520" cy="142" r="7" fill="var(--accent2)"/>
-      <rect x="415" y="150" width="150" height="200" rx="14" fill="rgba(57,197,207,0.12)" stroke="var(--accent4)" stroke-width="2"/>
-      <text x="490" y="215" text-anchor="middle" font-size="34">🚌</text>
-      <text x="490" y="250" text-anchor="middle" font-size="15" font-weight="600" fill="var(--text)">Transportes</text>
-      <text x="490" y="270" text-anchor="middle" font-size="11" fill="var(--muted)">lógica propia</text>
-
-      <!-- Agricultura -->
-      <circle cx="615" cy="142" r="7" fill="var(--accent2)"/>
-      <circle cx="685" cy="142" r="7" fill="var(--accent2)"/>
-      <rect x="580" y="150" width="150" height="200" rx="14" fill="rgba(210,153,34,0.12)" stroke="var(--warn)" stroke-width="2"/>
-      <text x="655" y="215" text-anchor="middle" font-size="34">🌾</text>
-      <text x="655" y="250" text-anchor="middle" font-size="15" font-weight="600" fill="var(--text)">Agricultura</text>
-      <text x="655" y="270" text-anchor="middle" font-size="11" fill="var(--muted)">lógica propia</text>
-
-      <!-- Quinta pieza fantasma: extensible, "tu servicio" -->
-      <circle cx="780" cy="142" r="7" fill="var(--border)"/>
-      <circle cx="850" cy="142" r="7" fill="var(--border)"/>
-      <rect x="745" y="150" width="150" height="200" rx="14" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="6 4"/>
-      <text x="820" y="215" text-anchor="middle" font-size="34">➕</text>
-      <text x="820" y="250" text-anchor="middle" font-size="15" font-weight="600" fill="var(--muted)">tu servicio</text>
-      <text x="820" y="270" text-anchor="middle" font-size="11" fill="var(--muted)">mismo chasis</text>
-
-      <text x="490" y="372" text-anchor="middle" font-size="12" font-style="italic" fill="var(--muted)">Distintas por dentro — encajan sin fricción porque comparten el mismo chasis por fuera.</text>
     </svg>
   </div>
   <p style="color: var(--muted); font-size: 0.85rem; margin-top: -0.5rem;">
-    Cada pieza (dominio) es libre de ser completamente distinta por dentro — como las piezas de un Lego,
-    cada una con su propia forma interna. Lo que las hace compatibles entre sí es que todas comparten el
-    mismo <strong>conector externo</strong>: el chasis impone el mismo cifrado, el mismo logging, el mismo
-    health check, el mismo circuit breaker y el mismo escaneo de dependencias a cualquier pieza que se
-    monte sobre él — incluida la que construya tu propio equipo.
+    Nota que ninguna de las cinco capacidades de la lista tiene que ver con qué hace el servicio — todas
+    son sobre cómo se conecta con el resto del fleet. Eso es exactamente lo que va <strong>por fuera</strong>
+    de cualquier pieza, sin excepción.
+  </p>
+
+  <p>
+    Ahora arma el rompecabezas completo: nueve piezas con <strong>la misma forma externa</strong> (mismos
+    salientes, mismas ranuras) para que encajen sin fricción, pero cada una con un contenido completamente
+    distinto <strong>por dentro</strong> — un sector del estado distinto, como en el rompecabezas del
+    enunciado del curso.
+  </p>
+
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin: 1.25rem 0; overflow-x: auto;">
+    <svg viewBox="0 0 720 720" width="100%" style="min-width: 560px; max-width: 640px; display: block; margin: 0 auto; font-family: var(--font-sans);" role="img" aria-labelledby="chasis-puzzle-title chasis-puzzle-desc">
+      <title id="chasis-puzzle-title">Rompecabezas de nueve piezas sobre el mismo chasis</title>
+      <desc id="chasis-puzzle-desc">Nueve piezas de rompecabezas —Salud, Educación, Transportes, Agricultura, Energía, Agua, Vivienda, Interior y Turismo— todas con la misma forma exterior de conectores, cada una con un color e ícono de dominio distinto por dentro.</desc>
+
+      <!-- Salud (fila 0, col 0) -->
+      <path d="M 60,60 L 260,60 L 260,120 C 294,120 294,200 260,200 L 260,260 L 200,260 C 200,294 120,294 120,260 L 60,260 L 60,60 Z" fill="#3fb95022" stroke="#3fb950" stroke-width="3"/>
+      <text x="160" y="152" text-anchor="middle" font-size="46">🩺</text>
+      <text x="160" y="194" text-anchor="middle" font-size="17" font-weight="600" fill="var(--text)">Salud</text>
+
+      <!-- Educación (fila 0, col 1) -->
+      <path d="M 260,60 L 460,60 L 460,120 C 494,120 494,200 460,200 L 460,260 L 400,260 C 400,294 320,294 320,260 L 260,260 L 260,200 C 294,200 294,120 260,120 L 260,60 Z" fill="#58a6ff22" stroke="#58a6ff" stroke-width="3"/>
+      <text x="360" y="152" text-anchor="middle" font-size="46">🎓</text>
+      <text x="360" y="194" text-anchor="middle" font-size="17" font-weight="600" fill="var(--text)">Educación</text>
+
+      <!-- Transportes (fila 0, col 2) -->
+      <path d="M 460,60 L 660,60 L 660,260 L 600,260 C 600,294 520,294 520,260 L 460,260 L 460,200 C 494,200 494,120 460,120 L 460,60 Z" fill="#39c5cf22" stroke="#39c5cf" stroke-width="3"/>
+      <text x="560" y="152" text-anchor="middle" font-size="46">🚌</text>
+      <text x="560" y="194" text-anchor="middle" font-size="17" font-weight="600" fill="var(--text)">Transportes</text>
+
+      <!-- Agricultura (fila 1, col 0) -->
+      <path d="M 60,260 L 120,260 C 120,294 200,294 200,260 L 260,260 L 260,320 C 294,320 294,400 260,400 L 260,460 L 200,460 C 200,494 120,494 120,460 L 60,460 L 60,260 Z" fill="#d2992222" stroke="#d29922" stroke-width="3"/>
+      <text x="160" y="352" text-anchor="middle" font-size="46">🌾</text>
+      <text x="160" y="394" text-anchor="middle" font-size="17" font-weight="600" fill="var(--text)">Agricultura</text>
+
+      <!-- Energía (fila 1, col 1) -->
+      <path d="M 260,260 L 320,260 C 320,294 400,294 400,260 L 460,260 L 460,320 C 494,320 494,400 460,400 L 460,460 L 400,460 C 400,494 320,494 320,460 L 260,460 L 260,400 C 294,400 294,320 260,320 L 260,260 Z" fill="#bc8cff22" stroke="#bc8cff" stroke-width="3"/>
+      <text x="360" y="352" text-anchor="middle" font-size="46">⚡</text>
+      <text x="360" y="394" text-anchor="middle" font-size="17" font-weight="600" fill="var(--text)">Energía</text>
+
+      <!-- Agua (fila 1, col 2) -->
+      <path d="M 460,260 L 520,260 C 520,294 600,294 600,260 L 660,260 L 660,460 L 600,460 C 600,494 520,494 520,460 L 460,460 L 460,400 C 494,400 494,320 460,320 L 460,260 Z" fill="#1f6feb22" stroke="#1f6feb" stroke-width="3"/>
+      <text x="560" y="352" text-anchor="middle" font-size="46">💧</text>
+      <text x="560" y="394" text-anchor="middle" font-size="17" font-weight="600" fill="var(--text)">Agua</text>
+
+      <!-- Vivienda (fila 2, col 0) -->
+      <path d="M 60,460 L 120,460 C 120,494 200,494 200,460 L 260,460 L 260,520 C 294,520 294,600 260,600 L 260,660 L 60,660 L 60,460 Z" fill="#f778ba22" stroke="#f778ba" stroke-width="3"/>
+      <text x="160" y="552" text-anchor="middle" font-size="46">🏠</text>
+      <text x="160" y="594" text-anchor="middle" font-size="17" font-weight="600" fill="var(--text)">Vivienda</text>
+
+      <!-- Interior (fila 2, col 1) -->
+      <path d="M 260,460 L 320,460 C 320,494 400,494 400,460 L 460,460 L 460,520 C 494,520 494,600 460,600 L 460,660 L 260,660 L 260,600 C 294,600 294,520 260,520 L 260,460 Z" fill="#f8514922" stroke="#f85149" stroke-width="3"/>
+      <text x="360" y="552" text-anchor="middle" font-size="46">🚓</text>
+      <text x="360" y="594" text-anchor="middle" font-size="17" font-weight="600" fill="var(--text)">Interior</text>
+
+      <!-- Turismo (fila 2, col 2) -->
+      <path d="M 460,460 L 520,460 C 520,494 600,494 600,460 L 660,460 L 660,660 L 460,660 L 460,600 C 494,600 494,520 460,520 L 460,460 Z" fill="#d2a8ff22" stroke="#d2a8ff" stroke-width="3"/>
+      <text x="560" y="552" text-anchor="middle" font-size="46">🏞️</text>
+      <text x="560" y="594" text-anchor="middle" font-size="17" font-weight="600" fill="var(--text)">Turismo</text>
+    </svg>
+  </div>
+  <p style="color: var(--muted); font-size: 0.85rem; margin-top: -0.5rem;">
+    Nueve sectores sin nada en común a nivel de negocio — y aun así, cada pieza encaja con sus vecinas
+    porque ninguna reinventó su propio conector. Cada pieza (dominio) es libre de ser completamente
+    distinta por dentro. Lo que las hace compatibles entre sí es que todas comparten el mismo
+    <strong>conector externo</strong>: el chasis impone el mismo cifrado, el mismo logging, el mismo health
+    check, el mismo circuit breaker y el mismo escaneo de dependencias a cualquier pieza que se monte sobre
+    él — incluida la que construya tu propio equipo.
   </p>
 
   <div class="worked-example">
